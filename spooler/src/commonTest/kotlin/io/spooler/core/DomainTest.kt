@@ -43,4 +43,11 @@ class DomainTest {
     val f = PrintResult.Failure("boom")
     assertEquals("boom", f.message)
   }
+
+  @Test
+  fun isSuccessReflectsResultVariant() {
+    assertTrue(PrintResult.Success.isSuccess)
+    assertTrue(PrintResult.Saved("x").isSuccess)
+    assertFalse(PrintResult.Failure("e").isSuccess)
+  }
 }

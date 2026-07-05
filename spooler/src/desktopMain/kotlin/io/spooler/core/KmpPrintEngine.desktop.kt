@@ -15,6 +15,14 @@ import kotlinx.coroutines.withContext
 import org.apache.pdfbox.pdmodel.PDDocument
 import org.apache.pdfbox.printing.PDFPageable
 
+private val styleTagRegex = Regex("(?s)<style.*?</style>")
+private val headTagRegex = Regex("(?s)<head.*?</head>")
+private val brTagRegex = Regex("<br\\s*/?>")
+private val hrTagRegex = Regex("<hr[^>]*/?>")
+private val blockCloseTagRegex = Regex("</(div|p|h1|h2|h3|hr|tr)>")
+private val anyTagRegex = Regex("<[^>]+>")
+private val extraBlankLinesRegex = Regex("\n{3,}")
+
 actual class KmpPrintEngine {
   actual suspend fun execute(html: String, target: PrintTarget, type: DocumentType): PrintResult =
     withContext(Dispatchers.Default) {
@@ -53,7 +61,8 @@ actual class KmpPrintEngine {
         job.printService = service
       }
       job.setPageable(PDFPageable(document))
-      val attributes = HashPrintRequestAttributeSet().apply { add(Copies(driver.copies)) }
+      val attributes =
+        HashPrintRequestAttributeSet().apply { add(Copies(driver.copies.coerceAtLeast(1))) }
       job.print(attributes)
     }
     return PrintResult.Success
@@ -72,18 +81,19 @@ actual class KmpPrintEngine {
 
   private fun htmlToText(html: String): String =
     html
-      .replace(Regex("(?s)<style.*?</style>"), "")
-      .replace(Regex("(?s)<head.*?</head>"), "")
-      .replace(Regex("<br\\s*/?>"), "\n")
-      .replace(Regex("</(div|p|h1|h2|h3|hr|tr)>"), "\n")
-      .replace(Regex("<[^>]+>"), "")
-      .replace("&amp;", "&")
+      .replace(styleTagRegex, "")
+      .replace(headTagRegex, "")
+      .replace(brTagRegex, "\n")
+      .replace(hrTagRegex, "\n")
+      .replace(blockCloseTagRegex, "\n")
+      .replace(anyTagRegex, "")
       .replace("&lt;", "<")
       .replace("&gt;", ">")
       .replace("&quot;", "\"")
       .replace("&#39;", "'")
+      .replace("&amp;", "&")
       .lines()
       .joinToString("\n") { it.trim() }
-      .replace(Regex("\n{3,}"), "\n\n")
+      .replace(extraBlankLinesRegex, "\n\n")
       .trim()
 }

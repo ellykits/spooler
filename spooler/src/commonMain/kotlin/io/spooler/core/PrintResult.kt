@@ -7,3 +7,6 @@ sealed interface PrintResult {
 
   data class Failure(val message: String, val cause: Throwable? = null) : PrintResult
 }
+
+val PrintResult.isSuccess: Boolean
+  get() = this is PrintResult.Success || this is PrintResult.Saved

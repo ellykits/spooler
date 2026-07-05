@@ -32,7 +32,7 @@ class DesktopEngineIntegrationTest {
     val html =
       UnifiedKmpDocument(DocumentType.A4_DOCUMENT, title = "Invoice")
         .addLogo(logoPng, ImageType.PNG)
-        .addHeader("Norims Hardware Ltd")
+        .addHeader("Northwind Hardware Ltd")
         .addTableRow("Description", "Qty", "Total")
         .addTableRow("PPR Pipe 1in", "40", "12,000.00")
         .addDivider()
@@ -54,7 +54,7 @@ class DesktopEngineIntegrationTest {
   fun rendersThermalReceiptToRealPdf() = runBlocking {
     val html =
       UnifiedKmpDocument(DocumentType.RECEIPT_80MM, title = "Receipt")
-        .addHeader("NORIMS HARDWARE")
+        .addHeader("NORTHWIND HARDWARE")
         .addTableRow("PTFE Tape", "3", "150.00")
         .addDivider()
         .addText("Thank you!")

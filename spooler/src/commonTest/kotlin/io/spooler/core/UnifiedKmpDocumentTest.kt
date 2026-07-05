@@ -74,4 +74,47 @@ class UnifiedKmpDocumentTest {
     assertTrue(html.indexOf(">H<") < html.indexOf(">T<"))
     assertEquals(doc, doc.addDivider())
   }
+
+  @Test
+  fun accentColorAppliedToHeaderAndDivider() {
+    val html =
+      UnifiedKmpDocument(DocumentType.A4_DOCUMENT, accentColor = "#0F766E")
+        .addHeader("H")
+        .buildHtml()
+    assertContains(html, "color: #0F766E")
+    assertContains(html, "border-top: 1px dashed #0F766E")
+  }
+
+  @Test
+  fun nullAccentColorFallsBackToDefaults() {
+    val html = UnifiedKmpDocument(DocumentType.A4_DOCUMENT).buildHtml()
+    assertContains(html, ".header { color: #000")
+    assertContains(html, "border-top: 1px dashed #000")
+  }
+
+  @Test
+  fun addHeaderRowRendersHeaderRowWithCells() {
+    val html =
+      UnifiedKmpDocument(DocumentType.A4_DOCUMENT).addHeaderRow("Item", "Qty", "Total").buildHtml()
+    assertContains(html, "class=\"row header-row\"")
+    assertContains(html, ">Item<")
+    assertContains(html, ">Qty<")
+    assertContains(html, "class=\"cell cell-last\">Total<")
+  }
+
+  @Test
+  fun accentColorIsSanitizedAgainstCssInjection() {
+    val html =
+      UnifiedKmpDocument(DocumentType.A4_DOCUMENT, accentColor = "#0F766E; } body{display:none}")
+        .buildHtml()
+    assertFalse(html.contains("display:none"))
+    assertFalse(html.contains("0F766E; }"))
+  }
+
+  @Test
+  fun emptyLogoBytesAreSkipped() {
+    val html =
+      UnifiedKmpDocument(DocumentType.A4_DOCUMENT).addLogo(ByteArray(0), ImageType.PNG).buildHtml()
+    assertFalse(html.contains("<img"))
+  }
 }
