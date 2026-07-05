@@ -21,6 +21,7 @@ spotless {
     targetExclude("**/build/")
     ktlint().editorConfigOverride(ktlintOptions)
     ktfmt().googleStyle()
+    licenseHeaderFile(rootProject.file("spotless/copyright.txt"))
   }
   kotlinGradle {
     target("*.gradle.kts", "**/*.gradle.kts")
