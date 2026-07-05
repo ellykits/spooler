@@ -28,6 +28,7 @@ internal fun DocumentType.styleBlock(accentColor: String? = null): String {
     body { margin: 0; padding: 8px; width: $cssWidth; font-family: -apple-system, "Segoe UI", Roboto, sans-serif; font-size: 12px; color: #000; }
     .logo { display: block; max-width: 100%; margin: 0 auto 8px; }
     .image { display: block; max-width: 100%; margin: 6px 0; }
+    .graphic { text-align: center; margin: 8px 0; }
     .header { color: ${accent ?: "#000"}; text-align: center; font-size: 15px; font-weight: 700; margin: 4px 0; }
     .text { margin: 2px 0; }
     .row { table-layout: fixed; width: 100%; border-collapse: collapse; margin: 2px 0; }

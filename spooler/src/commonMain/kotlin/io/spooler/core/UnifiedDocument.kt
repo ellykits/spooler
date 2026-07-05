@@ -21,6 +21,8 @@ class UnifiedDocument(
 
     data class RawHtml(val html: String) : Element
 
+    data class Svg(val svg: String) : Element
+
     data object Divider : Element
 
     data object PageBreak : Element
@@ -54,6 +56,12 @@ class UnifiedDocument(
 
   /** Inserts an existing HTML fragment into the document body verbatim, without escaping. */
   fun addRawHtml(html: String): UnifiedDocument = apply { elements += Element.RawHtml(html) }
+
+  /**
+   * Embeds an SVG graphic, centered as a block. The [svg] (an `<svg>…</svg>` string) is inserted
+   * verbatim; on desktop it renders into the PDF via the registered SVG drawer.
+   */
+  fun addSvg(svg: String): UnifiedDocument = apply { elements += Element.Svg(svg) }
 
   fun addDivider(): UnifiedDocument = apply { elements += Element.Divider }
 
@@ -90,6 +98,8 @@ class UnifiedDocument(
         is Element.HeaderRow -> body.append(renderRow(element.cells, "row header-row"))
 
         is Element.RawHtml -> body.append(element.html)
+
+        is Element.Svg -> body.append("<div class=\"graphic\">${element.svg}</div>")
 
         Element.Divider -> body.append("<hr class=\"divider\"/>")
 
