@@ -1,12 +1,13 @@
-# Demo: BYO-HTML sales dashboard with SVG charts
+# Demo: SVG charts in the library + bring-your-own-HTML samples
 
 ## Context
 
 The library builds print-ready **HTML** as its cross-platform source of truth and lets
-callers inject arbitrary markup via `UnifiedDocument.addRawHtml(html)`. We want a demo
-sample that (a) showcases this "bring your own HTML" path and (b) produces a genuinely
-complex document — an A4 **sales dashboard** with pie, bar, and line charts — that renders
-as a PDF.
+callers inject arbitrary markup via `UnifiedDocument.addRawHtml(html)`. This work (a) adds
+reusable **SVG chart builders to the library**, and (b) showcases the "bring your own HTML"
+path with several demo samples: a chart **dashboard** (inline SVG), a **report** that embeds
+a chart as an image, and hand-authored **flyer** / **member card** documents built from
+literal HTML — all rendering to PDF.
 
 Charts are expressed as **inline SVG**. On web/Android/iOS the HTML is rendered by real
 browser engines, so SVG "just works." The desktop PDF path (OpenHtmlToPdf) renders no SVG
@@ -26,9 +27,10 @@ one-HTML-API model.
   `PdfRendererBuilder().useSVGDrawer(BatikSVGDrawer()).withHtmlContent(html, null)…`.
   Additive, one line; the rest of the pipeline is unchanged.
 
-## 2. Demo chart module (`demo/src/commonMain/.../Charts.kt`)
+## 2. Chart module — public library API (`spooler/src/commonMain/.../Charts.kt`)
 
-Pure-Kotlin functions that return **inline `<svg>` strings**, SVG 1.1 core only
+The chart builders live in the **library** (`io.spooler.core`) as public, reusable API — not
+demo code. Pure-Kotlin functions returning **inline `<svg>` strings**, SVG 1.1 core only
 (`<path>`, `<rect>`, `<polyline>`, `<line>`, `<circle>`, `<text>` with presentation
 attributes — no CSS classes, no `<foreignObject>`, no filters) so Batik and browsers render
 them identically:
@@ -38,33 +40,42 @@ them identically:
 - `barChartSvg(bars: List<Bar>): String` — scaled `<rect>`s with axis + value labels.
 - `lineChartSvg(points: List<Point>): String` — a `<polyline>` over a light gridline set.
 
-`Slice`/`Bar`/`Point` are small demo data classes. Palette reuses the demo identity
-(Ink Teal `#0F766E`, Kiln Amber `#B45309`, plus 2–3 derived tints) so the dashboard looks
-on-brand, not default-chart-colored. All data is deterministic and hard-coded (no
-`Date`/random, per KMP script constraints).
+`Slice`/`Bar`/`Point` are public data classes (KDoc'd). Labels run through the library's
+internal `escapeHtml`. Palette is on-brand (Ink Teal `#0F766E`, Kiln Amber `#B45309`, plus
+derived tints). Being public API, these signatures are now a compatibility surface.
 
-## 3. Demo sample (`Documents.kt`, `Samples.kt`)
+## 3. Demo samples (`Documents.kt`, `ByoDocuments.kt`, `Samples.kt`)
 
-- `salesDashboardDocument(): UnifiedDocument` — A4, Northwind logo + header, a short intro
-  line, then the three charts composed into one HTML block passed through
-  `addRawHtml(...)` (the BYO-HTML demonstration), with section headers between them.
-- Add `Sample("Sales Dashboard", salesDashboardDocument())` to `allSamples()`. It renders
-  as a new teal "A4 · PDF" card; **Preview** shows the charts in the browser, **Save PDF**
-  renders them through Batik.
+Four A4 showcase cards, all consuming the library:
+
+- **Sales Dashboard** (`salesDashboardDocument`) — logo + header, then the three library
+  charts as inline SVG via `addRawHtml`. Renders in browsers and (via Batik) the desktop PDF.
+- **Sales Report** (`salesReportDocument`, `ByoDocuments.kt`) — a literal inline-styled report
+  HTML snippet that embeds a chart as an `<img src="data:image/png;base64,…">`. The PNG is a
+  library `barChartSvg` **pre-rendered once** to `ChartImage.kt` as a base64 constant, so the
+  sample itself contains only an image — no drawing code.
+- **Promo Flyer** (`promoFlyerDocument`) — a full hand-authored flyer as a literal HTML block
+  passed to `addRawHtml`, with the logo embedded as a data URI. Pure BYO-HTML.
+- **Member Card** (`memberCardDocument`) — a literal styled card (rounded header, table rows).
+
+BYO snippets use inline styles only, avoid flexbox/gap, and use literal Unicode (`•`, `–`) not
+HTML entities (OpenHtmlToPdf parses as XML). All added to `allSamples()`.
 
 ## 4. Testing
 
-- `commonTest` (`ChartsTest`): each builder emits a well-formed `<svg …>…</svg>` containing
-  the expected marks — e.g. one `<path>` per pie slice, one `<rect>` per bar, a `<polyline>`
-  for the line — and escapes/handles empty input without throwing.
-- `desktopTest` (extend `DesktopEngineIntegrationTest`): render a document whose body
-  contains an inline `<svg>` to a `SaveToFile` PDF; assert the result is `PrintResult.Saved`
-  and the file is non-trivial in size (proves the SVG drawer is wired and Batik ran).
+- `spooler` `commonTest` (`ChartsTest`, moved from demo): each builder emits a well-formed
+  `<svg …>…</svg>` with the expected marks (one `<path>` per pie slice, one `<rect>` per bar,
+  a `<polyline>`) and handles empty input without throwing.
+- `spooler` `desktopTest` (`DesktopEngineIntegrationTest`): render a document with an inline
+  `<svg>` to a `SaveToFile` PDF; assert `PrintResult.Saved` and a non-trivial file (proves the
+  SVG drawer is wired and Batik ran).
 
 ## Verification
 
-- `:spooler:desktopTest` and `:demo:desktopTest` green; `:spooler` desktop PDF of the
-  dashboard contains rendered charts (no OpenHtmlToPdf SVG/CSS warnings for the chart block).
-- `:demo:wasmJsBrowserDevelopmentRun` in a browser: the new card previews with all three
-  charts drawn; 0 console errors.
-- Compiles on desktop, Android, JS, WasmJS; iOS unverified off macOS. `spotlessCheck` passes.
+- `:spooler:desktopTest`, `:demo:desktopTest`, `ChartsTest` green; `spotlessCheck` passes.
+- Rendered all four A4 samples to real PDFs and rasterized them: dashboard shows all three
+  drawn charts; Sales Report shows the embedded chart image; Promo Flyer and Member Card
+  render their styled layouts correctly.
+- `:demo:wasmJsBrowserDevelopmentRun` in a browser: the four new/updated cards appear; the
+  dashboard preview draws all charts; 0 console errors.
+- Compiles on desktop, Android, JS, WasmJS; iOS unverified off macOS.

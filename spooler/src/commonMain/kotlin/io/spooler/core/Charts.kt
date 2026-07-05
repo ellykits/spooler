@@ -1,17 +1,19 @@
-package io.spooler.demo
+package io.spooler.core
 
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.round
 import kotlin.math.sin
 
+/** A labelled slice of a [pieChartSvg]. */
 data class Slice(val label: String, val value: Double)
 
+/** A labelled column of a [barChartSvg]. */
 data class Bar(val label: String, val value: Double)
 
+/** A labelled point of a [lineChartSvg]. */
 data class Point(val label: String, val value: Double)
 
-// On-brand categorical palette (demo identity: teal + amber, with tints).
 private val chartPalette = listOf("#0F766E", "#B45309", "#14B8A6", "#F59E0B", "#0E7490", "#9A3412")
 
 private const val AXIS = "#CBD5E1"
@@ -19,7 +21,10 @@ private const val GRID = "#EEF2F6"
 private const val LABEL = "#334155"
 private const val MUTED = "#64748B"
 
-/** A donut-free pie with a legend, as SVG 1.1 core so Batik and browsers render it alike. */
+/**
+ * Renders [slices] as a pie chart with a legend, returning an inline `<svg>` (SVG 1.1 core) that
+ * embeds into a document via [UnifiedDocument.addRawHtml] and renders in browsers and PDF alike.
+ */
 fun pieChartSvg(slices: List<Slice>): String {
   val total = slices.sumOf { it.value }.takeIf { it > 0.0 } ?: 1.0
   val cx = 120.0
@@ -46,12 +51,12 @@ fun pieChartSvg(slices: List<Slice>): String {
     sb.append(
       "<rect x=\"262\" y=\"${n(y)}\" width=\"14\" height=\"14\" rx=\"2\" fill=\"${color(i)}\"/>"
     )
-    sb.append(text(284.0, y + 12, "${esc(slice.label)} — $pct%", LABEL))
+    sb.append(text(284.0, y + 12, "${escapeHtml(slice.label)} — $pct%", LABEL))
   }
   return sb.append("</svg>").toString()
 }
 
-/** A vertical bar chart with a baseline, value labels, and category labels. */
+/** Renders [bars] as a vertical bar chart with a baseline, value labels, and category labels. */
 fun barChartSvg(bars: List<Bar>): String {
   val left = 44.0
   val top = 22.0
@@ -70,12 +75,12 @@ fun barChartSvg(bars: List<Bar>): String {
       "<rect x=\"${n(x)}\" y=\"${n(y)}\" width=\"${n(barW)}\" height=\"${n(barH)}\" rx=\"2\" fill=\"${color(i)}\"/>"
     )
     sb.append(centeredText(x + barW / 2, y - 6, compact(bar.value), LABEL))
-    sb.append(centeredText(x + barW / 2, top + plotH + 18, esc(bar.label), MUTED))
+    sb.append(centeredText(x + barW / 2, top + plotH + 18, escapeHtml(bar.label), MUTED))
   }
   return sb.append("</svg>").toString()
 }
 
-/** A line chart with horizontal gridlines, point markers, and x labels. */
+/** Renders [points] as a line chart with horizontal gridlines, point markers, and x labels. */
 fun lineChartSvg(points: List<Point>): String {
   val left = 44.0
   val top = 22.0
@@ -98,7 +103,7 @@ fun lineChartSvg(points: List<Point>): String {
     sb.append(
       "<circle cx=\"${n(px(i))}\" cy=\"${n(py(p.value))}\" r=\"3.5\" fill=\"${chartPalette[0]}\"/>"
     )
-    sb.append(centeredText(px(i), top + plotH + 18, esc(p.label), MUTED))
+    sb.append(centeredText(px(i), top + plotH + 18, escapeHtml(p.label), MUTED))
   }
   return sb.append("</svg>").toString()
 }
@@ -126,6 +131,3 @@ private fun n(v: Double): String {
   val r = round(v * 10) / 10.0
   return if (r == r.toLong().toDouble()) r.toLong().toString() else r.toString()
 }
-
-private fun esc(s: String): String =
-  s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")

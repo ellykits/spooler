@@ -1,4 +1,4 @@
-package io.spooler.demo
+package io.spooler.core
 
 import kotlin.test.Test
 import kotlin.test.assertEquals

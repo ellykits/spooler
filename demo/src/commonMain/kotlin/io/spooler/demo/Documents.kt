@@ -1,7 +1,13 @@
 package io.spooler.demo
 
+import io.spooler.core.Bar
 import io.spooler.core.DocumentType
+import io.spooler.core.Point
+import io.spooler.core.Slice
 import io.spooler.core.UnifiedDocument
+import io.spooler.core.barChartSvg
+import io.spooler.core.lineChartSvg
+import io.spooler.core.pieChartSvg
 
 private const val BRAND_ACCENT = "#0F766E"
 
