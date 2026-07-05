@@ -30,9 +30,9 @@ internal fun DocumentType.styleBlock(accentColor: String? = null): String {
     .image { display: block; max-width: 100%; margin: 6px 0; }
     .header { color: ${accent ?: "#000"}; text-align: center; font-size: 15px; font-weight: 700; margin: 4px 0; }
     .text { margin: 2px 0; }
-    .row { display: flex; width: 100%; gap: 6px; margin: 2px 0; }
-    .cell { flex: 1; text-align: left; overflow: hidden; }
-    .cell-last { text-align: right; }
+    .row { table-layout: fixed; width: 100%; border-collapse: collapse; margin: 2px 0; }
+    .cell { text-align: left; overflow: hidden; padding-right: 6px; }
+    .cell-last { text-align: right; padding-right: 0; }
     .header-row { background: ${accent ?: "#111"}; color: #fff; font-weight: 700; }
     .header-row .cell { padding: 2px 4px; }
     .divider { border: none; border-top: 1px dashed ${accent ?: "#000"}; margin: 6px 0; }

@@ -19,9 +19,7 @@ kotlin {
     minSdk = libs.versions.android.minSdk.get().toInt()
   }
 
-  listOf(iosX64(), iosArm64(), iosSimulatorArm64()).forEach {
-    it.binaries.framework { baseName = "spooler" }
-  }
+  listOf(iosArm64(), iosSimulatorArm64()).forEach { it.binaries.framework { baseName = "spooler" } }
 
   wasmJs { browser() }
   js(IR) { browser() }

@@ -34,12 +34,12 @@ class UnifiedDocumentTest {
   }
 
   @Test
-  fun tableRowUsesFlexAndRightAlignsLastCell() {
+  fun tableRowUsesTableMarkupAndRightAlignsLastCell() {
     val html =
       UnifiedDocument(DocumentType.RECEIPT_80MM).addTableRow("Item", "Qty", "Price").buildHtml()
-    assertContains(html, "display: flex")
-    assertContains(html, "class=\"cell\"")
-    assertContains(html, "class=\"cell cell-last\"")
+    assertContains(html, "<table class=\"row\">")
+    assertContains(html, "<td class=\"cell\">")
+    assertContains(html, "<td class=\"cell cell-last\">")
     assertContains(html, ">Item<")
     assertContains(html, ">Price<")
   }

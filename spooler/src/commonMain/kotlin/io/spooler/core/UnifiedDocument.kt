@@ -110,12 +110,12 @@ class UnifiedDocument(
   }
 
   private fun renderRow(cells: List<String>, rowClass: String): String {
-    val sb = StringBuilder("<div class=\"$rowClass\">")
+    val sb = StringBuilder("<table class=\"$rowClass\"><tr>")
     cells.forEachIndexed { index, cell ->
       val cls = if (index == cells.lastIndex && cells.size > 1) "cell cell-last" else "cell"
-      sb.append("<span class=\"$cls\">${escapeHtml(cell)}</span>")
+      sb.append("<td class=\"$cls\">${escapeHtml(cell)}</td>")
     }
-    sb.append("</div>")
+    sb.append("</tr></table>")
     return sb.toString()
   }
 }

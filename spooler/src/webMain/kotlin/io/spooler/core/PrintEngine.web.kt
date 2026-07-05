@@ -14,7 +14,13 @@ actual class PrintEngine {
   actual suspend fun execute(html: String, target: PrintTarget, type: DocumentType): PrintResult =
     try {
       when (target) {
-        is PrintTarget.SaveToFile -> downloadHtml(html, target.path)
+        is PrintTarget.SaveToFile ->
+          if (target.path.endsWith(".pdf", ignoreCase = true)) {
+            printViaIframe(html)
+          } else {
+            downloadHtml(html, target.path)
+          }
+
         is PrintTarget.SendToPrinter -> printViaIframe(html)
       }
     } catch (t: Throwable) {
