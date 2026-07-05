@@ -35,6 +35,7 @@ kotlin {
       dependencies {
         implementation(libs.kotlinx.coroutines.swing)
         implementation(libs.openhtmltopdf.pdfbox)
+        implementation(libs.openhtmltopdf.svg.support)
       }
     }
     val androidMain by getting { dependencies { implementation(libs.kotlinx.coroutines.android) } }

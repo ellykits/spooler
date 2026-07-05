@@ -50,6 +50,25 @@ class DesktopEngineIntegrationTest {
   }
 
   @Test
+  fun rendersInlineSvgToRealPdf() = runBlocking {
+    val svg =
+      "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"200\" height=\"120\" viewBox=\"0 0 200 120\">" +
+        "<rect x=\"10\" y=\"10\" width=\"60\" height=\"100\" fill=\"#0F766E\"/>" +
+        "<circle cx=\"140\" cy=\"60\" r=\"40\" fill=\"#B45309\"/></svg>"
+    val html =
+      UnifiedDocument(DocumentType.A4_DOCUMENT, title = "Charts")
+        .addHeader("Dashboard")
+        .addRawHtml(svg)
+        .buildHtml()
+    val path = tempPath(".pdf")
+
+    val result = PrintEngine().execute(html, PrintTarget.SaveToFile(path), DocumentType.A4_DOCUMENT)
+
+    assertTrue(result is PrintResult.Saved, "expected Saved but was $result")
+    assertTrue(File(path).length() > 1000, "PDF with SVG should be non-trivial")
+  }
+
+  @Test
   fun rendersThermalReceiptToRealPdf() = runBlocking {
     val html =
       UnifiedDocument(DocumentType.RECEIPT_80MM, title = "Receipt")

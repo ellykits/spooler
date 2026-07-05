@@ -6,6 +6,7 @@ data class Sample(val label: String, val document: UnifiedDocument)
 
 fun allSamples(): List<Sample> =
   listOf(
+    Sample("Sales Dashboard", salesDashboardDocument()),
     Sample("A4 Invoice", invoiceDocument()),
     Sample("Purchase Order", purchaseOrderDocument()),
     Sample("Stock Report", stockReportDocument()),

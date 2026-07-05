@@ -1,6 +1,7 @@
 package io.spooler.core
 
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder
+import com.openhtmltopdf.svgsupport.BatikSVGDrawer
 import java.awt.print.PrinterJob
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
@@ -46,7 +47,11 @@ actual class PrintEngine {
 
   private fun renderPdf(html: String): ByteArray {
     val out = ByteArrayOutputStream()
-    PdfRendererBuilder().withHtmlContent(html, null).toStream(out).run()
+    PdfRendererBuilder()
+      .useSVGDrawer(BatikSVGDrawer())
+      .withHtmlContent(html, null)
+      .toStream(out)
+      .run()
     return out.toByteArray()
   }
 
