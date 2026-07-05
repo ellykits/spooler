@@ -61,6 +61,20 @@ Android needs a `Context` to drive `WebView`/`PrintManager`:
 - Android: `KmpPrintEngine(context)`
 - iOS / Desktop / Web: `KmpPrintEngine()`
 
+## Platform behavior notes
+
+- **Android `SaveToFile`**: WebView has no silent file-write API, so this
+  presents the system print dialog (which offers "Save as PDF") instead of
+  writing a file directly. It returns `PrintResult.Success`, not
+  `Saved(path)`. Desktop and iOS write the file directly and return
+  `Saved(path)`.
+- **Web `SaveToFile`**: there is no PDF renderer on web, so this downloads an
+  `.html` file (the caller's path extension is ignored/coerced to `.html`).
+- **iOS `SendToPrinter`**: uses `UIPrintInteractionController.presentAnimated`.
+  On iPad the print controller requires a presentation anchor (`sourceView`);
+  the no-arg `KmpPrintEngine()` presents from the key window, so callers
+  targeting iPad may need a custom presentation anchor.
+
 ## Demo
 
 The `:demo` module is a Compose Multiplatform app that builds a real inventory

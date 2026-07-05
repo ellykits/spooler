@@ -1,7 +1,9 @@
 package io.spooler.core
 
 import kotlin.coroutines.resume
+import kotlin.js.ExperimentalWasmJsInterop
 import kotlinx.browser.document
+import kotlinx.browser.window
 import kotlinx.coroutines.suspendCancellableCoroutine
 import org.w3c.dom.HTMLAnchorElement
 import org.w3c.dom.HTMLIFrameElement
@@ -19,17 +21,25 @@ actual class KmpPrintEngine {
       PrintResult.Failure(t.message ?: "Web print failed", t)
     }
 
+  @OptIn(ExperimentalWasmJsInterop::class)
   private fun downloadHtml(html: String, path: String): PrintResult {
     val blob = htmlBlob(html)
     val url = URL.createObjectURL(blob)
+    val fileName = path.substringAfterLast('/').substringBeforeLast('.') + ".html"
     val anchor = document.createElement("a") as HTMLAnchorElement
     anchor.href = url
-    anchor.download = path.substringAfterLast('/')
+    anchor.download = fileName
     document.body?.appendChild(anchor)
     anchor.click()
     document.body?.removeChild(anchor)
-    URL.revokeObjectURL(url)
-    return PrintResult.Saved(path)
+    window.setTimeout(
+      {
+        URL.revokeObjectURL(url)
+        null
+      },
+      1000,
+    )
+    return PrintResult.Saved(fileName)
   }
 
   private suspend fun printViaIframe(html: String): PrintResult =
@@ -43,15 +53,17 @@ actual class KmpPrintEngine {
       iframe.style.border = "0"
       fun remove() = document.body?.removeChild(iframe)
       iframe.onload = {
-        val win = iframe.contentWindow
-        if (win == null) {
-          remove()
-          cont.resume(PrintResult.Failure("iframe has no content window"))
-        } else {
-          win.focus()
-          win.print()
-          remove()
-          cont.resume(PrintResult.Success)
+        if (!cont.isCompleted) {
+          val win = iframe.contentWindow
+          if (win == null) {
+            remove()
+            cont.resume(PrintResult.Failure("iframe has no content window"))
+          } else {
+            win.focus()
+            win.print()
+            remove()
+            cont.resume(PrintResult.Success)
+          }
         }
       }
       cont.invokeOnCancellation { remove() }
