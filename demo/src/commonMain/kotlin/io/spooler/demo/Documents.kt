@@ -3,17 +3,19 @@ package io.spooler.demo
 import io.spooler.core.DocumentType
 import io.spooler.core.UnifiedKmpDocument
 
-fun invoiceHtml(): String =
-  UnifiedKmpDocument(DocumentType.A4_DOCUMENT, title = "Invoice INV-2026-0042")
+private const val BRAND_ACCENT = "#0F766E"
+
+fun invoiceDocument(): UnifiedKmpDocument =
+  UnifiedKmpDocument(DocumentType.A4_DOCUMENT, title = "TAX INVOICE", accentColor = BRAND_ACCENT)
     .addLogo(sampleLogoBytes(), sampleLogoType)
-    .addHeader("Norims Hardware Ltd")
-    .addText("P.O. Box 1234-20100, Nakuru • VAT PIN: P051234567X")
+    .addHeader("Northwind Hardware Ltd")
+    .addText("12 Kiln Road, Riverside Industrial Park, Portford 40100 • VAT PIN: P000123456Z")
     .addDivider()
     .addTableRow("Invoice", "INV-2026-0042")
     .addTableRow("Date", "2026-07-05")
-    .addTableRow("Bill To", "Rift Valley Contractors Ltd")
+    .addTableRow("Bill To", "Meridian Contractors Ltd")
     .addDivider()
-    .addTableRow("Description", "Qty", "Unit", "Total")
+    .addHeaderRow("Description", "Qty", "Unit", "Total")
     .addTableRow("PPR Pipe 1in", "40", "300.00", "12,000.00")
     .addTableRow("Cement 50kg", "25", "780.00", "19,500.00")
     .addTableRow("Steel Bar D12", "60", "1,150.00", "69,000.00")
@@ -22,20 +24,19 @@ fun invoiceHtml(): String =
     .addTableRow("VAT (16%)", "", "", "16,080.00")
     .addTableRow("TOTAL DUE", "", "", "116,580.00")
     .addDivider()
-    .addText("Payment due within 30 days. Bank: Equity 012345678, Norims Hardware Ltd.")
-    .buildHtml()
+    .addText("Payment due within 30 days. Bank: Equity 012345678, Northwind Hardware Ltd.")
 
-fun purchaseOrderHtml(): String =
-  UnifiedKmpDocument(DocumentType.A4_DOCUMENT, title = "Purchase Order PO-2026-0117")
+fun purchaseOrderDocument(): UnifiedKmpDocument =
+  UnifiedKmpDocument(DocumentType.A4_DOCUMENT, title = "PURCHASE ORDER", accentColor = BRAND_ACCENT)
     .addLogo(sampleLogoBytes(), sampleLogoType)
-    .addHeader("Norims Hardware Ltd")
-    .addText("P.O. Box 1234-20100, Nakuru • VAT PIN: P051234567X")
+    .addHeader("Northwind Hardware Ltd")
+    .addText("12 Kiln Road, Riverside Industrial Park, Portford 40100 • VAT PIN: P000123456Z")
     .addDivider()
     .addTableRow("PO Number", "PO-2026-0117")
-    .addTableRow("Supplier", "Devki Steel Mills Ltd")
+    .addTableRow("Supplier", "Vantage Building Supplies")
     .addTableRow("Delivery Date", "2026-07-12")
     .addDivider()
-    .addTableRow("Description", "Qty", "Unit", "Total")
+    .addHeaderRow("Description", "Qty", "Unit", "Total")
     .addTableRow("Steel Bar D12", "200", "1,100.00", "220,000.00")
     .addTableRow("Roofing Sheets 3m", "80", "1,450.00", "116,000.00")
     .addTableRow("Wire Nails 4in", "50", "180.00", "9,000.00")
@@ -48,18 +49,17 @@ fun purchaseOrderHtml(): String =
     .addNewPage()
     .addHeader("Terms & Conditions")
     .addText("1. Goods must match the specifications and quantities stated above.")
-    .addText("2. Delivery must be made to the Nakuru branch on or before the delivery date.")
+    .addText("2. Delivery must be made to the Portford branch on or before the delivery date.")
     .addText("3. Payment terms: 30 days net from date of delivery and invoice receipt.")
     .addText("4. Rejected or damaged goods will be returned at the supplier's cost.")
-    .buildHtml()
 
-fun stockReportHtml(): String =
-  UnifiedKmpDocument(DocumentType.A4_DOCUMENT, title = "Stock Report - Nakuru Branch")
+fun stockReportDocument(): UnifiedKmpDocument =
+  UnifiedKmpDocument(DocumentType.A4_DOCUMENT, title = "STOCK REPORT", accentColor = BRAND_ACCENT)
     .addLogo(sampleLogoBytes(), sampleLogoType)
-    .addHeader("Norims Hardware Ltd - Stock Report")
-    .addText("Branch: Nakuru • Report Date: 2026-07-05")
+    .addHeader("Northwind Hardware Ltd - Stock Report")
+    .addText("Branch: Portford • Report Date: 2026-07-05")
     .addDivider()
-    .addTableRow("SKU", "Item", "In Stock", "Reorder Level", "Status")
+    .addHeaderRow("SKU", "Item", "In Stock", "Reorder Level", "Status")
     .addTableRow("PPR-1IN", "PPR Pipe 1in", "180", "50", "OK")
     .addTableRow("CEM-50KG", "Cement 50kg", "22", "40", "LOW")
     .addTableRow("STL-D12", "Steel Bar D12", "310", "100", "OK")
@@ -68,13 +68,12 @@ fun stockReportHtml(): String =
     .addTableRow("NAIL-4IN", "Wire Nails 4in", "5", "25", "LOW")
     .addDivider()
     .addText("Total SKUs: 6 • Low Stock Items: 3")
-    .buildHtml()
 
-fun saleReceiptHtml(): String =
-  UnifiedKmpDocument(DocumentType.RECEIPT_80MM, title = "Norims Receipt")
+fun saleReceiptDocument(): UnifiedKmpDocument =
+  UnifiedKmpDocument(DocumentType.RECEIPT_80MM, title = "Northwind Receipt")
     .addLogo(sampleLogoBytes(), sampleLogoType)
-    .addHeader("NORIMS HARDWARE")
-    .addText("Nakuru Branch • Till 04")
+    .addHeader("NORTHWIND HARDWARE")
+    .addText("Portford Branch • Till 04")
     .addText("2026-07-05 14:32 • Cashier: Wanjiru")
     .addDivider()
     .addTableRow("Item", "Qty", "Amount")
@@ -88,12 +87,11 @@ fun saleReceiptHtml(): String =
     .addDivider()
     .addText("M-PESA • Ref QTR4X8P2L")
     .addText("Thank you for shopping with us!")
-    .buildHtml()
 
-fun compactReceiptHtml(): String =
-  UnifiedKmpDocument(DocumentType.RECEIPT_58MM, title = "Norims Receipt")
-    .addHeader("NORIMS HARDWARE")
-    .addText("Naivasha Rd Kiosk")
+fun compactReceiptDocument(): UnifiedKmpDocument =
+  UnifiedKmpDocument(DocumentType.RECEIPT_58MM, title = "Northwind Receipt")
+    .addHeader("NORTHWIND HARDWARE")
+    .addText("Kiln Road Kiosk")
     .addDivider()
     .addTableRow("Wire Nails 4in", "45.00")
     .addTableRow("PTFE Tape", "50.00")
@@ -102,4 +100,3 @@ fun compactReceiptHtml(): String =
     .addTableRow("TOTAL", "125.00")
     .addText("M-PESA Ref QTR4X8P2L")
     .addText("Asante sana!")
-    .buildHtml()

@@ -12,7 +12,7 @@ class SampleDumpTest {
     for (sample in allSamples()) {
       val slug = sample.label.lowercase().replace(" ", "-")
       val file = File(outputDir, "$slug.html")
-      file.writeText(sample.html)
+      file.writeText(sample.document.buildHtml())
 
       assertTrue(file.exists(), "$file should exist")
       assertTrue(file.readText().isNotEmpty(), "$file should be non-empty")

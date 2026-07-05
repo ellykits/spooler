@@ -1,14 +1,14 @@
 package io.spooler.demo
 
-import io.spooler.core.DocumentType
+import io.spooler.core.UnifiedKmpDocument
 
-data class Sample(val label: String, val type: DocumentType, val html: String)
+data class Sample(val label: String, val document: UnifiedKmpDocument)
 
 fun allSamples(): List<Sample> =
   listOf(
-    Sample("A4 Invoice", DocumentType.A4_DOCUMENT, invoiceHtml()),
-    Sample("Purchase Order", DocumentType.A4_DOCUMENT, purchaseOrderHtml()),
-    Sample("Stock Report", DocumentType.A4_DOCUMENT, stockReportHtml()),
-    Sample("80mm Sale Receipt", DocumentType.RECEIPT_80MM, saleReceiptHtml()),
-    Sample("58mm Compact Receipt", DocumentType.RECEIPT_58MM, compactReceiptHtml()),
+    Sample("A4 Invoice", invoiceDocument()),
+    Sample("Purchase Order", purchaseOrderDocument()),
+    Sample("Stock Report", stockReportDocument()),
+    Sample("80mm Sale Receipt", saleReceiptDocument()),
+    Sample("58mm Compact Receipt", compactReceiptDocument()),
   )

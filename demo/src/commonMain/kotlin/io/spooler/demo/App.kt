@@ -22,6 +22,8 @@ import androidx.compose.ui.unit.dp
 import io.spooler.core.EscPosDriver
 import io.spooler.core.KmpPrintEngine
 import io.spooler.core.PrintTarget
+import io.spooler.core.isSuccess
+import io.spooler.core.print
 import kotlinx.coroutines.launch
 
 @Composable
@@ -40,15 +42,19 @@ fun App(engine: KmpPrintEngine) {
           Button(
             onClick = {
               scope.launch {
-                val paperWidthMm = sample.type.cssWidth.removeSuffix("mm").toInt()
                 val target =
-                  if (sample.type.isContinuous) {
-                    PrintTarget.SendToPrinter(EscPosDriver(paperWidthMm = paperWidthMm))
+                  if (sample.document.type.isContinuous) {
+                    PrintTarget.SendToPrinter(EscPosDriver())
                   } else {
                     PrintTarget.SaveToFile("${sample.label.replace(" ", "-")}.pdf")
                   }
-                val result = engine.execute(sample.html, target, sample.type)
-                status = "${sample.label}: $result"
+                val result = engine.print(sample.document, target)
+                status =
+                  if (result.isSuccess) {
+                    "${sample.label}: ✓ $result"
+                  } else {
+                    "${sample.label}: ✗ $result"
+                  }
               }
             }
           ) {
