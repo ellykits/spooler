@@ -1,55 +1,9 @@
 package io.spooler.demo
 
-import io.spooler.core.Bar
 import io.spooler.core.DocumentType
-import io.spooler.core.Point
-import io.spooler.core.Slice
 import io.spooler.core.UnifiedDocument
-import io.spooler.core.barChartSvg
-import io.spooler.core.lineChartSvg
-import io.spooler.core.pieChartSvg
 
 private const val BRAND_ACCENT = "#0F766E"
-
-private val monthlyRevenue =
-  listOf(
-    Point("Jan", 82_000.0),
-    Point("Feb", 95_000.0),
-    Point("Mar", 78_000.0),
-    Point("Apr", 110_000.0),
-    Point("May", 132_000.0),
-    Point("Jun", 121_000.0),
-  )
-
-private val categoryRevenue =
-  listOf(
-    Bar("Plumbing", 120_000.0),
-    Bar("Building", 340_000.0),
-    Bar("Electrical", 90_000.0),
-    Bar("Tools", 60_000.0),
-    Bar("Fasteners", 45_000.0),
-  )
-
-private val paymentMix = listOf(Slice("M-PESA", 62.0), Slice("Card", 24.0), Slice("Cash", 14.0))
-
-/** BYO-HTML showcase: inline SVG charts injected verbatim via [UnifiedDocument.addRawHtml]. */
-fun salesDashboardDocument(): UnifiedDocument =
-  UnifiedDocument(DocumentType.A4_DOCUMENT, title = "SALES DASHBOARD", accentColor = BRAND_ACCENT)
-    .addLogo(sampleLogoBytes(), sampleLogoType)
-    .addHeader("Northwind Hardware Ltd")
-    .addText("Q2 2026 performance • Portford branch")
-    .addDivider()
-    .addHeader("Monthly Revenue")
-    .addRawHtml(lineChartSvg(monthlyRevenue))
-    .addHeader("Revenue by Category")
-    .addRawHtml(barChartSvg(categoryRevenue))
-    .addHeader("Payments by Method")
-    .addRawHtml(pieChartSvg(paymentMix))
-    .addDivider()
-    .addText(
-      "Charts are inline SVG supplied through addRawHtml — the same document renders to PDF " +
-        "on desktop and iOS and prints on web and Android."
-    )
 
 fun invoiceDocument(): UnifiedDocument =
   UnifiedDocument(DocumentType.A4_DOCUMENT, title = "TAX INVOICE", accentColor = BRAND_ACCENT)

@@ -58,7 +58,7 @@ class DesktopEngineIntegrationTest {
     val html =
       UnifiedDocument(DocumentType.A4_DOCUMENT, title = "Charts")
         .addHeader("Dashboard")
-        .addRawHtml(svg)
+        .addSvg(svg)
         .buildHtml()
     val path = tempPath(".pdf")
 

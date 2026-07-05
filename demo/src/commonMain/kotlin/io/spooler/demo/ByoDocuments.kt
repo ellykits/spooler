@@ -4,9 +4,9 @@ import io.spooler.core.Base64
 import io.spooler.core.DocumentType
 import io.spooler.core.UnifiedDocument
 
-// "Bring your own HTML" samples: whole documents authored as literal inline-styled HTML and
-// passed verbatim to UnifiedDocument.addRawHtml — no builder calls, no chart code. Styles avoid
-// flexbox/gap so the same markup renders in the desktop PDF (OpenHtmlToPdf) and in browsers.
+// "Bring your own HTML" samples: documents authored as literal inline-styled HTML and passed
+// verbatim to UnifiedDocument.addRawHtml. Styles avoid flexbox/gap so the same markup renders in
+// the desktop PDF (OpenHtmlToPdf) and in browsers. The report also embeds one bar chart via addSvg.
 
 fun promoFlyerDocument(): UnifiedDocument =
   UnifiedDocument(DocumentType.A4_DOCUMENT, title = "Mid-Year Sale").addRawHtml(promoFlyerHtml())
@@ -14,9 +14,20 @@ fun promoFlyerDocument(): UnifiedDocument =
 fun memberCardDocument(): UnifiedDocument =
   UnifiedDocument(DocumentType.A4_DOCUMENT, title = "Member Card").addRawHtml(memberCardHtml())
 
+private val categorySales =
+  listOf(
+    Bar("Cement", 340.0),
+    Bar("Steel", 220.0),
+    Bar("Pipe", 180.0),
+    Bar("Roofing", 120.0),
+    Bar("Nails", 60.0),
+  )
+
 fun salesReportDocument(): UnifiedDocument =
   UnifiedDocument(DocumentType.A4_DOCUMENT, title = "Quarterly Sales Report")
-    .addRawHtml(salesReportHtml())
+    .addRawHtml(salesReportIntroHtml())
+    .addSvg(barChartSvg(categorySales))
+    .addRawHtml(salesReportOutroHtml())
 
 private fun promoFlyerHtml(): String {
   val logo = "data:${sampleLogoType.mimeType};base64,${Base64.encode(sampleLogoBytes())}"
@@ -53,14 +64,18 @@ private fun memberCardHtml(): String =
   """
     .trimIndent()
 
-private fun salesReportHtml(): String =
+private fun salesReportIntroHtml(): String =
   """
-    <div style="font-family: sans-serif; color: #0F172A;">
-      <h1 style="font-size: 24px; margin: 0 0 2px; color:#0F766E;">Quarterly Sales Report</h1>
-      <p style="font-size: 13px; color:#64748B; margin: 0 0 16px;">Northwind Hardware Ltd • Q2 2026 • Portford branch</p>
-      <p style="font-size: 14px; line-height: 1.5;">Revenue held strong through the quarter, led by building materials. The chart below summarises revenue by product category, in KES thousands.</p>
-      <img src="data:image/png;base64,$SALES_CHART_PNG_BASE64" width="480" style="display:block; margin: 16px 0; border: 1px solid #E2E8F0; border-radius: 8px;"/>
-      <p style="font-size: 14px; line-height: 1.5;">Cement remained the top category at 340k, followed by steel at 220k. Fasteners trailed at 60k — a restocking opportunity for Q3.</p>
-    </div>
+  <div style="font-family: sans-serif; color: #0F172A;">
+    <h1 style="font-size: 24px; margin: 0 0 2px; color:#0F766E;">Quarterly Sales Report</h1>
+    <p style="font-size: 13px; color:#64748B; margin: 0 0 16px;">Northwind Hardware Ltd • Q2 2026 • Portford branch</p>
+    <p style="font-size: 14px; line-height: 1.5;">Revenue held strong through the quarter, led by building materials. The chart below summarises revenue by product category, in KES thousands.</p>
+  </div>
+  """
+    .trimIndent()
+
+private fun salesReportOutroHtml(): String =
+  """
+  <p style="font-family: sans-serif; font-size: 14px; line-height: 1.5; color: #0F172A;">Cement remained the top category at 340k, followed by steel at 220k. Fasteners trailed at 60k — a restocking opportunity for Q3.</p>
   """
     .trimIndent()

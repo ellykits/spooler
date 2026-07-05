@@ -141,4 +141,12 @@ class UnifiedDocumentTest {
     assertContains(html, "<table><tr><td>x</td></tr></table>")
     assertFalse(html.contains("&lt;table&gt;"))
   }
+
+  @Test
+  fun svgEmbeddedInGraphicBlock() {
+    val svg = "<svg xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"10\" height=\"10\"/></svg>"
+    val html = UnifiedDocument(DocumentType.A4_DOCUMENT).addSvg(svg).buildHtml()
+    assertContains(html, "<div class=\"graphic\">$svg</div>")
+    assertFalse(html.contains("&lt;svg"))
+  }
 }
