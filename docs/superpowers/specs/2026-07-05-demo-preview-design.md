@@ -1,12 +1,12 @@
-# Demo: document-type selector, browser preview, print/save
+# Demo: document cards with inline preview and print/save
 
 ## Context
 
-The demo currently renders one button per sample; each button immediately prints or
-saves that document. There is no way to see a document before dispatching it. We want
-the demo to (1) let the user pick a document type from a list, (2) open a **preview** in
-the platform's default viewer, and (3) run the existing print/save action from a separate
-button.
+The demo originally rendered one button per sample; each button immediately printed or
+saved that document, with no way to see a document first. A first redesign added a
+select-a-row-then-act flow, but selecting then reaching for a shared button proved
+unintuitive. The final design makes **each document a self-contained card** with its own
+inline **Preview** and **Save PDF / Print** actions.
 
 An in-app WYSIWYG preview was rejected: Compose has no HTML view on desktop JVM without a
 heavy JavaFX/JCEF dependency. Instead the preview opens the generated HTML in the
@@ -14,32 +14,42 @@ platform's viewer, keeping the `spooler` library untouched (this is demo-only co
 
 ## UI (`demo/src/commonMain/.../App.kt`)
 
-Single screen, vertically centered, scrollable:
+Single scrollable screen: a monospace `spooler` wordmark + one-line tagline, then a
+centered column (max 480dp) of document cards.
 
 ```
-        spooler demo
+                spooler
+   Print receipts and documents from one KMP API
 
-   │ A4 Invoice          (selected)
-   │ Purchase Order
-   │ Stock Report
-   │ 80mm Sale Receipt
-   │ 58mm Compact Receipt
-
-   ┌─────────┐  ┌───────────┐
-   │ Preview │  │ Save PDF  │
-   └─────────┘  └───────────┘
-
-   Ready
+   ┌▐──────────────────────────────────────────┐
+   │ ▭  A4 Invoice                              │
+   │ ▐  A4 · PDF                                 │
+   │                      [ Preview ] [Save PDF] │
+   └────────────────────────────────────────────┘
+   ┌▐──────────────────────────────────────────┐
+   │ ▯  80mm Sale Receipt                       │
+   │ ▐  80MM · THERMAL                           │
+   │                        [ Preview ] [ Print ]│
+   └────────────────────────────────────────────┘
 ```
 
-- **Vertical list** of `allSamples()` (5 rows); tapping a row selects it (highlighted
-  surface). State: `selectedIndex` via `remember { mutableStateOf(0) }`.
-- **Preview** button → `openPreview(sample.document.buildHtml())` — opens the rendered
-  HTML in the platform viewer.
-- **Action** button, label adapts to the selected type: `Save PDF` for `A4_DOCUMENT`,
-  `Print` for continuous receipts. Runs the **existing** logic unchanged
-  (`engine.print(document, target)` with today's target selection).
-- **Status** text reflects the last action's `PrintResult`.
+Each `DocumentCard` (one per `allSamples()` entry):
+
+- **Family color** encodes paper stock: Ink Teal `#0F766E` for A4/PDF, Kiln Amber
+  `#B45309` for continuous receipts — used for the left accent bar, the paper glyph, and
+  the format tag.
+- **Paper glyph** — a `Canvas`-drawn miniature of the real stock (narrow strip for
+  receipts, wider sheet for A4) in the family color; the demo's signature element.
+- **Title** (`titleMedium`, SemiBold) + **format tag** (`FontFamily.Monospace`, e.g.
+  `A4 · PDF`, `80MM · THERMAL`) derived from `DocumentType`.
+- **Inline actions**: `OutlinedButton("Preview")` →
+  `openPreview(sample.document.buildHtml())`; filled `Button` labelled `Save PDF` for
+  `A4_DOCUMENT` / `Print` for receipts, running the existing target logic.
+- **Status chip** below the list shows the last action's result (error-colored on
+  `PrintResult.Failure`). No row-selection state.
+
+The screen uses a light `MaterialTheme` with a teal primary (`lightColorScheme`) so the
+wordmark, primary buttons, and A4 accent share one brand color.
 
 ## Preview mechanism (new demo `expect`/`actual`)
 
@@ -50,7 +60,8 @@ expect fun openPreview(html: String)
 Actuals (each opens the HTML in the platform's default viewer):
 
 - **desktop** — write to a temp `.html` file, `Desktop.getDesktop().browse(file.toURI())`.
-- **web** — `URL.createObjectURL(Blob([html], type=text/html))`, then `window.open(url)`.
+- **web** — `window.open("about:blank")`, then `document.write(html)` into the new tab
+  (avoids the js/wasm `Blob` construction split; shared in `webMain`).
 - **android** — write to `cacheDir`, expose via a `FileProvider`, launch `ACTION_VIEW`
   (`text/html`) with `FLAG_GRANT_READ_URI_PERMISSION`, using the existing global
   `demoAppContext`. Requires a `FileProvider` `<provider>` in `AndroidManifest.xml` plus
@@ -73,8 +84,11 @@ stays caller-configurable via `PrintTarget.SaveToFile(path)`.
 
 ## Verification
 
-- `:demo:run` (desktop): select each type, Preview opens the browser, Save PDF writes the
-  file; label shows `Print` for receipts.
-- `:demo:wasmJsBrowserDevelopmentRun`: Preview opens a new tab; no new console errors.
-- Android/iOS: manual — Preview opens QuickLook / a viewer; existing print path still works.
+- Compiles on desktop, Android, JS, WasmJS. iOS is unverified off macOS (Kotlin/Native).
+- `:demo:wasmJsBrowserDevelopmentRun` driven in a browser: cards render capped at 480dp;
+  each card's Preview opens a new tab titled after the document (`TAX INVOICE`,
+  `Northwind Receipt`); receipt cards show `Print`, A4 cards show `Save PDF`; 0 console
+  errors.
+- `:demo:run` (desktop): Preview opens the system browser; Save PDF writes the file.
+- Android/iOS: manual — Preview opens the `ACTION_VIEW` viewer / QuickLook.
 - `:demo:desktopTest` (SampleDumpTest) stays green; `spotlessCheck` passes.
