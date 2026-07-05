@@ -28,6 +28,8 @@ kotlin {
 
   applyDefaultHierarchyTemplate()
 
+  compilerOptions { freeCompilerArgs.add("-Xexpect-actual-classes") }
+
   sourceSets {
     val commonMain by getting { dependencies { implementation(libs.kotlinx.coroutines.core) } }
     val commonTest by getting { dependencies { implementation(libs.kotlin.test) } }
