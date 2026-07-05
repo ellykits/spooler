@@ -19,6 +19,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import io.spooler.core.DocumentType
 import io.spooler.core.EscPosDriver
 import io.spooler.core.KmpPrintEngine
 import io.spooler.core.PrintTarget
@@ -44,7 +45,13 @@ fun App(engine: KmpPrintEngine) {
               scope.launch {
                 val target =
                   if (sample.document.type.isContinuous) {
-                    PrintTarget.SendToPrinter(EscPosDriver())
+                    val narrow = sample.document.type == DocumentType.RECEIPT_58MM
+                    PrintTarget.SendToPrinter(
+                      EscPosDriver(
+                        paperWidthMm = if (narrow) 58 else 80,
+                        charactersPerLine = if (narrow) 32 else 48,
+                      )
+                    )
                   } else {
                     PrintTarget.SaveToFile("${sample.label.replace(" ", "-")}.pdf")
                   }

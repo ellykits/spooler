@@ -58,17 +58,22 @@ actual class KmpPrintEngine {
           }
           Unit
         }
+      cont.invokeOnCancellation { controller.dismissAnimated(false) }
       val isPad = UIDevice.currentDevice.userInterfaceIdiom == UIUserInterfaceIdiomPad
       val rootView = UIApplication.sharedApplication.keyWindow?.rootViewController?.view
-      if (isPad && rootView != null) {
-        controller.presentFromRect(
-          CGRectMake(0.0, 0.0, 0.0, 0.0),
-          inView = rootView,
-          animated = true,
-          completionHandler = completionHandler,
-        )
-      } else {
-        controller.presentAnimated(true, completionHandler = completionHandler)
+      val presented =
+        if (isPad && rootView != null) {
+          controller.presentFromRect(
+            CGRectMake(0.0, 0.0, 0.0, 0.0),
+            inView = rootView,
+            animated = true,
+            completionHandler = completionHandler,
+          )
+        } else {
+          controller.presentAnimated(true, completionHandler = completionHandler)
+        }
+      if (!presented && !cont.isCompleted) {
+        cont.resume(PrintResult.Failure("Could not present the print controller"))
       }
     }
 
