@@ -9,3 +9,5 @@ captures/
 xcuserdata/
 .DS_Store
 kotlin-js-store/
+.superpowers/
+.playwright-mcp/
