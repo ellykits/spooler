@@ -32,6 +32,7 @@ actual class KmpPrintEngine(private val context: Context) {
           if (!cont.isCompleted) cont.resume(view)
         }
       }
+    cont.invokeOnCancellation { webView.destroy() }
     webView.loadDataWithBaseURL(null, html, "text/html", "UTF-8", null)
   }
 
