@@ -40,6 +40,7 @@ kotlin {
       }
     }
     val androidMain by getting { dependencies { implementation(libs.kotlinx.coroutines.android) } }
+    val webMain by getting { dependencies { implementation(libs.kotlinx.browser) } }
   }
 
   targets.withType<KotlinJvmTarget> { compilerOptions.jvmTarget.set(JvmTarget.JVM_17) }
