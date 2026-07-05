@@ -8,6 +8,7 @@ plugins {
   alias(libs.plugins.kotlinMultiplatform)
   alias(libs.plugins.androidMultiplatformLibrary)
   alias(libs.plugins.mavenPublish)
+  signing
 }
 
 kotlin {
@@ -43,6 +44,14 @@ kotlin {
   }
 
   targets.withType<KotlinJvmTarget> { compilerOptions.jvmTarget.set(JvmTarget.JVM_17) }
+}
+
+signing { isRequired = true }
+
+gradle.taskGraph.whenReady {
+  if (allTasks.any { it.name.contains("MavenLocal", ignoreCase = true) }) {
+    tasks.withType<Sign>().configureEach { isEnabled = false }
+  }
 }
 
 mavenPublishing {
