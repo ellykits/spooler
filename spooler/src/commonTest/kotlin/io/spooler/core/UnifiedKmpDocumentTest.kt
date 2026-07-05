@@ -117,4 +117,32 @@ class UnifiedKmpDocumentTest {
       UnifiedKmpDocument(DocumentType.A4_DOCUMENT).addLogo(ByteArray(0), ImageType.PNG).buildHtml()
     assertFalse(html.contains("<img"))
   }
+
+  @Test
+  fun imageEmbeddedAsDataUri() {
+    val bytes = byteArrayOf(4, 5, 6, 7)
+    val html =
+      UnifiedKmpDocument(DocumentType.A4_DOCUMENT).addImage(bytes, ImageType.PNG).buildHtml()
+    assertContains(
+      html,
+      "<img class=\"image\" src=\"data:image/png;base64,${KmpBase64.encode(bytes)}\"/>",
+    )
+  }
+
+  @Test
+  fun emptyImageBytesAreSkipped() {
+    val html =
+      UnifiedKmpDocument(DocumentType.A4_DOCUMENT).addImage(ByteArray(0), ImageType.PNG).buildHtml()
+    assertFalse(html.contains("<img class=\"image\""))
+  }
+
+  @Test
+  fun rawHtmlInsertedVerbatim() {
+    val html =
+      UnifiedKmpDocument(DocumentType.A4_DOCUMENT)
+        .addRawHtml("<table><tr><td>x</td></tr></table>")
+        .buildHtml()
+    assertContains(html, "<table><tr><td>x</td></tr></table>")
+    assertFalse(html.contains("&lt;table&gt;"))
+  }
 }
