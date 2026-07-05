@@ -1,5 +1,7 @@
 @file:OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
 
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
   alias(libs.plugins.kotlinMultiplatform)
   alias(libs.plugins.androidApplication)
@@ -9,7 +11,7 @@ plugins {
 
 kotlin {
   androidTarget()
-  jvm("desktop")
+  jvm("desktop") { compilerOptions { jvmTarget.set(JvmTarget.JVM_17) } }
   listOf(iosArm64(), iosSimulatorArm64()).forEach {
     it.binaries.framework {
       baseName = "demo"
