@@ -37,6 +37,7 @@ kotlin {
         implementation(libs.androidx.lifecycle.runtimeCompose)
       }
     }
+    val commonTest by getting { dependencies { implementation(libs.kotlin.test) } }
     val androidMain by getting { dependencies { implementation(libs.androidx.activity.compose) } }
     val desktopMain by getting { dependencies { implementation(compose.desktop.currentOs) } }
   }
