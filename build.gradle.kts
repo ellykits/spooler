@@ -9,7 +9,12 @@ plugins {
 }
 
 spotless {
-  val ktlintOptions = mapOf("indent_size" to "2", "continuation_indent_size" to "2")
+  val ktlintOptions =
+    mapOf(
+      "indent_size" to "2",
+      "continuation_indent_size" to "2",
+      "ktlint_function_naming_ignore_when_annotated_with" to "Composable",
+    )
   kotlin {
     target("**/*.kt")
     targetExclude("**/build/")

@@ -1,0 +1,46 @@
+package io.spooler.demo
+
+import io.spooler.core.DocumentType
+import io.spooler.core.UnifiedKmpDocument
+
+fun receiptHtml(): String =
+  UnifiedKmpDocument(DocumentType.RECEIPT_80MM, title = "Norims Receipt")
+    .addLogo(sampleLogoBytes(), sampleLogoType)
+    .addHeader("NORIMS HARDWARE")
+    .addText("Nakuru Branch • Till 04")
+    .addText("2026-07-05 14:32 • Cashier: Wanjiru")
+    .addDivider()
+    .addTableRow("Item", "Qty", "Amount")
+    .addTableRow("PPR Pipe 1in", "4", "1,200.00")
+    .addTableRow("Elbow Joint", "8", "640.00")
+    .addTableRow("PTFE Tape", "3", "150.00")
+    .addDivider()
+    .addTableRow("Subtotal", "", "1,990.00")
+    .addTableRow("VAT (16%)", "", "318.40")
+    .addTableRow("TOTAL", "", "2,308.40")
+    .addDivider()
+    .addText("M-PESA • Ref QTR4X8P2L")
+    .addText("Thank you for shopping with us!")
+    .buildHtml()
+
+fun invoiceHtml(): String =
+  UnifiedKmpDocument(DocumentType.A4_DOCUMENT, title = "Invoice INV-2026-0042")
+    .addLogo(sampleLogoBytes(), sampleLogoType)
+    .addHeader("Norims Hardware Ltd")
+    .addText("P.O. Box 1234-20100, Nakuru • VAT PIN: P051234567X")
+    .addDivider()
+    .addTableRow("Invoice", "INV-2026-0042")
+    .addTableRow("Date", "2026-07-05")
+    .addTableRow("Bill To", "Rift Valley Contractors Ltd")
+    .addDivider()
+    .addTableRow("Description", "Qty", "Unit", "Total")
+    .addTableRow("PPR Pipe 1in", "40", "300.00", "12,000.00")
+    .addTableRow("Cement 50kg", "25", "780.00", "19,500.00")
+    .addTableRow("Steel Bar D12", "60", "1,150.00", "69,000.00")
+    .addDivider()
+    .addTableRow("Subtotal", "", "", "100,500.00")
+    .addTableRow("VAT (16%)", "", "", "16,080.00")
+    .addTableRow("TOTAL DUE", "", "", "116,580.00")
+    .addDivider()
+    .addText("Payment due within 30 days. Bank: Equity 012345678, Norims Hardware Ltd.")
+    .buildHtml()
