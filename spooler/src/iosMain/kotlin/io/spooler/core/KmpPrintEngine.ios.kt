@@ -50,11 +50,14 @@ actual class KmpPrintEngine {
     renderer.setValue(NSValue.valueWithCGRect(printable), forKey = "printableRect")
     val data = NSMutableData()
     UIGraphicsBeginPDFContextToData(data, paper, null)
-    val pages = renderer.numberOfPages().coerceAtLeast(1)
-    for (i in 0 until pages) {
-      renderer.drawPageAtIndex(i, inRect = paper)
+    try {
+      val pages = renderer.numberOfPages().coerceAtLeast(1)
+      for (i in 0 until pages) {
+        renderer.drawPageAtIndex(i, inRect = paper)
+      }
+    } finally {
+      if (UIGraphicsGetCurrentContext() != null) UIGraphicsEndPDFContext()
     }
-    if (UIGraphicsGetCurrentContext() != null) UIGraphicsEndPDFContext()
     val ok = data.writeToFile(path, atomically = true)
     return if (ok) PrintResult.Saved(path) else PrintResult.Failure("Could not write PDF to $path")
   }
