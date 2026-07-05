@@ -23,7 +23,7 @@ private val blockCloseTagRegex = Regex("</(div|p|h1|h2|h3|hr|tr)>")
 private val anyTagRegex = Regex("<[^>]+>")
 private val extraBlankLinesRegex = Regex("\n{3,}")
 
-actual class KmpPrintEngine {
+actual class PrintEngine {
   actual suspend fun execute(html: String, target: PrintTarget, type: DocumentType): PrintResult =
     withContext(Dispatchers.Default) {
       try {

@@ -1,8 +1,8 @@
 package io.spooler.demo
 
-import io.spooler.core.UnifiedKmpDocument
+import io.spooler.core.UnifiedDocument
 
-data class Sample(val label: String, val document: UnifiedKmpDocument)
+data class Sample(val label: String, val document: UnifiedDocument)
 
 fun allSamples(): List<Sample> =
   listOf(

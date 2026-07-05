@@ -2,8 +2,8 @@ package io.spooler.demo
 
 import android.annotation.SuppressLint
 import android.content.Context
-import io.spooler.core.KmpPrintEngine
+import io.spooler.core.PrintEngine
 
 @SuppressLint("StaticFieldLeak") lateinit var demoAppContext: Context
 
-actual fun createDemoEngine(): KmpPrintEngine = KmpPrintEngine(demoAppContext)
+actual fun createDemoEngine(): PrintEngine = PrintEngine(demoAppContext)

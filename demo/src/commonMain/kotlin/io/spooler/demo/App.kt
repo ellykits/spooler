@@ -21,14 +21,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import io.spooler.core.DocumentType
 import io.spooler.core.EscPosDriver
-import io.spooler.core.KmpPrintEngine
+import io.spooler.core.PrintEngine
 import io.spooler.core.PrintTarget
 import io.spooler.core.isSuccess
 import io.spooler.core.print
 import kotlinx.coroutines.launch
 
 @Composable
-fun App(engine: KmpPrintEngine) {
+fun App(engine: PrintEngine) {
   MaterialTheme {
     Surface(modifier = Modifier.fillMaxSize()) {
       val scope = rememberCoroutineScope()

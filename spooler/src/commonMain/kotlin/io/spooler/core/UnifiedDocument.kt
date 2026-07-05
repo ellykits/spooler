@@ -1,7 +1,7 @@
 package io.spooler.core
 
 /** Builds print-ready HTML documents for receipts and invoices from a fluent element API. */
-class UnifiedKmpDocument(
+class UnifiedDocument(
   val type: DocumentType,
   private val title: String = "",
   private val accentColor: String? = null,
@@ -29,36 +29,36 @@ class UnifiedKmpDocument(
   private val elements = mutableListOf<Element>()
 
   /** Adds a centered logo, embedded inline as a Base64 data URI. */
-  fun addLogo(bytes: ByteArray, type: ImageType): UnifiedKmpDocument = apply {
+  fun addLogo(bytes: ByteArray, type: ImageType): UnifiedDocument = apply {
     elements += Element.Logo(bytes, type)
   }
 
   /** Adds a full-width image, embedded inline as a Base64 data URI. */
-  fun addImage(bytes: ByteArray, type: ImageType): UnifiedKmpDocument = apply {
+  fun addImage(bytes: ByteArray, type: ImageType): UnifiedDocument = apply {
     elements += Element.Image(bytes, type)
   }
 
-  fun addHeader(text: String): UnifiedKmpDocument = apply { elements += Element.Header(text) }
+  fun addHeader(text: String): UnifiedDocument = apply { elements += Element.Header(text) }
 
-  fun addText(text: String): UnifiedKmpDocument = apply { elements += Element.Text(text) }
+  fun addText(text: String): UnifiedDocument = apply { elements += Element.Text(text) }
 
   /** Adds a table row of cells; the last cell is right-aligned. */
-  fun addTableRow(vararg cells: String): UnifiedKmpDocument = apply {
+  fun addTableRow(vararg cells: String): UnifiedDocument = apply {
     elements += Element.Row(cells.toList())
   }
 
   /** Adds a styled header row of cells; the last cell is right-aligned. */
-  fun addHeaderRow(vararg cells: String): UnifiedKmpDocument = apply {
+  fun addHeaderRow(vararg cells: String): UnifiedDocument = apply {
     elements += Element.HeaderRow(cells.toList())
   }
 
   /** Inserts an existing HTML fragment into the document body verbatim, without escaping. */
-  fun addRawHtml(html: String): UnifiedKmpDocument = apply { elements += Element.RawHtml(html) }
+  fun addRawHtml(html: String): UnifiedDocument = apply { elements += Element.RawHtml(html) }
 
-  fun addDivider(): UnifiedKmpDocument = apply { elements += Element.Divider }
+  fun addDivider(): UnifiedDocument = apply { elements += Element.Divider }
 
   /** Adds a page break. */
-  fun addNewPage(): UnifiedKmpDocument = apply { elements += Element.PageBreak }
+  fun addNewPage(): UnifiedDocument = apply { elements += Element.PageBreak }
 
   /** Renders all added elements into a complete, self-contained HTML document. */
   fun buildHtml(): String {
@@ -69,7 +69,7 @@ class UnifiedKmpDocument(
           if (element.bytes.isNotEmpty()) {
             body.append(
               "<img class=\"logo\" src=\"data:${element.type.mimeType};base64," +
-                "${KmpBase64.encode(element.bytes)}\"/>"
+                "${Base64.encode(element.bytes)}\"/>"
             )
           }
 
@@ -77,7 +77,7 @@ class UnifiedKmpDocument(
           if (element.bytes.isNotEmpty()) {
             body.append(
               "<img class=\"image\" src=\"data:${element.type.mimeType};base64," +
-                "${KmpBase64.encode(element.bytes)}\"/>"
+                "${Base64.encode(element.bytes)}\"/>"
             )
           }
 

@@ -6,10 +6,10 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-class UnifiedKmpDocumentTest {
+class UnifiedDocumentTest {
   @Test
   fun emitsWellFormedShell() {
-    val html = UnifiedKmpDocument(DocumentType.A4_DOCUMENT, title = "Invoice").buildHtml()
+    val html = UnifiedDocument(DocumentType.A4_DOCUMENT, title = "Invoice").buildHtml()
     assertTrue(html.startsWith("<!DOCTYPE html>"))
     assertContains(html, "<html")
     assertContains(html, "<head>")
@@ -20,7 +20,7 @@ class UnifiedKmpDocumentTest {
 
   @Test
   fun a4SetsPageSizeAndWidth() {
-    val html = UnifiedKmpDocument(DocumentType.A4_DOCUMENT).buildHtml()
+    val html = UnifiedDocument(DocumentType.A4_DOCUMENT).buildHtml()
     assertContains(html, "@page")
     assertContains(html, "size: A4")
     assertContains(html, "width: 210mm")
@@ -28,7 +28,7 @@ class UnifiedKmpDocumentTest {
 
   @Test
   fun thermalSetsNarrowWidthNoPage() {
-    val html = UnifiedKmpDocument(DocumentType.RECEIPT_80MM).buildHtml()
+    val html = UnifiedDocument(DocumentType.RECEIPT_80MM).buildHtml()
     assertContains(html, "width: 80mm")
     assertFalse(html.contains("size: A4"))
   }
@@ -36,7 +36,7 @@ class UnifiedKmpDocumentTest {
   @Test
   fun tableRowUsesFlexAndRightAlignsLastCell() {
     val html =
-      UnifiedKmpDocument(DocumentType.RECEIPT_80MM).addTableRow("Item", "Qty", "Price").buildHtml()
+      UnifiedDocument(DocumentType.RECEIPT_80MM).addTableRow("Item", "Qty", "Price").buildHtml()
     assertContains(html, "display: flex")
     assertContains(html, "class=\"cell\"")
     assertContains(html, "class=\"cell cell-last\"")
@@ -46,7 +46,7 @@ class UnifiedKmpDocumentTest {
 
   @Test
   fun dividerAndPageBreakRendered() {
-    val html = UnifiedKmpDocument(DocumentType.A4_DOCUMENT).addDivider().addNewPage().buildHtml()
+    val html = UnifiedDocument(DocumentType.A4_DOCUMENT).addDivider().addNewPage().buildHtml()
     assertContains(html, "class=\"divider\"")
     assertContains(html, "class=\"page-break\"")
     assertContains(html, "page-break-after: always")
@@ -54,7 +54,7 @@ class UnifiedKmpDocumentTest {
 
   @Test
   fun escapesUserText() {
-    val html = UnifiedKmpDocument(DocumentType.A4_DOCUMENT).addText("<b>a&b</b>").buildHtml()
+    val html = UnifiedDocument(DocumentType.A4_DOCUMENT).addText("<b>a&b</b>").buildHtml()
     assertContains(html, "&lt;b&gt;a&amp;b&lt;/b&gt;")
     assertFalse(html.contains("<b>a&b</b>"))
   }
@@ -62,14 +62,13 @@ class UnifiedKmpDocumentTest {
   @Test
   fun logoEmbeddedAsDataUri() {
     val bytes = byteArrayOf(0, 1, 2, 3)
-    val html =
-      UnifiedKmpDocument(DocumentType.RECEIPT_80MM).addLogo(bytes, ImageType.PNG).buildHtml()
-    assertContains(html, "src=\"data:image/png;base64,${KmpBase64.encode(bytes)}\"")
+    val html = UnifiedDocument(DocumentType.RECEIPT_80MM).addLogo(bytes, ImageType.PNG).buildHtml()
+    assertContains(html, "src=\"data:image/png;base64,${Base64.encode(bytes)}\"")
   }
 
   @Test
   fun preservesOrderAndChaining() {
-    val doc = UnifiedKmpDocument(DocumentType.A4_DOCUMENT).addHeader("H").addText("T")
+    val doc = UnifiedDocument(DocumentType.A4_DOCUMENT).addHeader("H").addText("T")
     val html = doc.buildHtml()
     assertTrue(html.indexOf(">H<") < html.indexOf(">T<"))
     assertEquals(doc, doc.addDivider())
@@ -78,16 +77,14 @@ class UnifiedKmpDocumentTest {
   @Test
   fun accentColorAppliedToHeaderAndDivider() {
     val html =
-      UnifiedKmpDocument(DocumentType.A4_DOCUMENT, accentColor = "#0F766E")
-        .addHeader("H")
-        .buildHtml()
+      UnifiedDocument(DocumentType.A4_DOCUMENT, accentColor = "#0F766E").addHeader("H").buildHtml()
     assertContains(html, "color: #0F766E")
     assertContains(html, "border-top: 1px dashed #0F766E")
   }
 
   @Test
   fun nullAccentColorFallsBackToDefaults() {
-    val html = UnifiedKmpDocument(DocumentType.A4_DOCUMENT).buildHtml()
+    val html = UnifiedDocument(DocumentType.A4_DOCUMENT).buildHtml()
     assertContains(html, ".header { color: #000")
     assertContains(html, "border-top: 1px dashed #000")
   }
@@ -95,7 +92,7 @@ class UnifiedKmpDocumentTest {
   @Test
   fun addHeaderRowRendersHeaderRowWithCells() {
     val html =
-      UnifiedKmpDocument(DocumentType.A4_DOCUMENT).addHeaderRow("Item", "Qty", "Total").buildHtml()
+      UnifiedDocument(DocumentType.A4_DOCUMENT).addHeaderRow("Item", "Qty", "Total").buildHtml()
     assertContains(html, "class=\"row header-row\"")
     assertContains(html, ">Item<")
     assertContains(html, ">Qty<")
@@ -105,7 +102,7 @@ class UnifiedKmpDocumentTest {
   @Test
   fun accentColorIsSanitizedAgainstCssInjection() {
     val html =
-      UnifiedKmpDocument(DocumentType.A4_DOCUMENT, accentColor = "#0F766E; } body{display:none}")
+      UnifiedDocument(DocumentType.A4_DOCUMENT, accentColor = "#0F766E; } body{display:none}")
         .buildHtml()
     assertFalse(html.contains("display:none"))
     assertFalse(html.contains("0F766E; }"))
@@ -114,32 +111,31 @@ class UnifiedKmpDocumentTest {
   @Test
   fun emptyLogoBytesAreSkipped() {
     val html =
-      UnifiedKmpDocument(DocumentType.A4_DOCUMENT).addLogo(ByteArray(0), ImageType.PNG).buildHtml()
+      UnifiedDocument(DocumentType.A4_DOCUMENT).addLogo(ByteArray(0), ImageType.PNG).buildHtml()
     assertFalse(html.contains("<img"))
   }
 
   @Test
   fun imageEmbeddedAsDataUri() {
     val bytes = byteArrayOf(4, 5, 6, 7)
-    val html =
-      UnifiedKmpDocument(DocumentType.A4_DOCUMENT).addImage(bytes, ImageType.PNG).buildHtml()
+    val html = UnifiedDocument(DocumentType.A4_DOCUMENT).addImage(bytes, ImageType.PNG).buildHtml()
     assertContains(
       html,
-      "<img class=\"image\" src=\"data:image/png;base64,${KmpBase64.encode(bytes)}\"/>",
+      "<img class=\"image\" src=\"data:image/png;base64,${Base64.encode(bytes)}\"/>",
     )
   }
 
   @Test
   fun emptyImageBytesAreSkipped() {
     val html =
-      UnifiedKmpDocument(DocumentType.A4_DOCUMENT).addImage(ByteArray(0), ImageType.PNG).buildHtml()
+      UnifiedDocument(DocumentType.A4_DOCUMENT).addImage(ByteArray(0), ImageType.PNG).buildHtml()
     assertFalse(html.contains("<img class=\"image\""))
   }
 
   @Test
   fun rawHtmlInsertedVerbatim() {
     val html =
-      UnifiedKmpDocument(DocumentType.A4_DOCUMENT)
+      UnifiedDocument(DocumentType.A4_DOCUMENT)
         .addRawHtml("<table><tr><td>x</td></tr></table>")
         .buildHtml()
     assertContains(html, "<table><tr><td>x</td></tr></table>")

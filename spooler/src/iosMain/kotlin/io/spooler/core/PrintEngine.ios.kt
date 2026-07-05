@@ -25,7 +25,7 @@ import platform.UIKit.UIUserInterfaceIdiomPad
 import platform.UIKit.valueWithCGRect
 
 @OptIn(ExperimentalForeignApi::class)
-actual class KmpPrintEngine {
+actual class PrintEngine {
   actual suspend fun execute(html: String, target: PrintTarget, type: DocumentType): PrintResult =
     withContext(Dispatchers.Main) {
       try {

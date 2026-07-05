@@ -67,7 +67,7 @@ custom edge) shared by `wasmJsMain` and `jsMain`.
   - `data class Saved(val path: String)`
   - `data class Failure(val message: String, val cause: Throwable? = null)`
 
-## 4. UnifiedKmpDocument Builder (commonMain)
+## 4. UnifiedDocument Builder (commonMain)
 
 Fluent builder over an ordered internal list of `Element` nodes (private sealed type:
 `Logo, Header, Text, TableRow, Divider, PageBreak`). Constructed with a `DocumentType`
@@ -75,12 +75,12 @@ and optional `title`.
 
 API:
 
-- `fun addLogo(bytes: ByteArray, type: ImageType): UnifiedKmpDocument`
-- `fun addHeader(text: String): UnifiedKmpDocument`
-- `fun addText(text: String): UnifiedKmpDocument`
-- `fun addTableRow(vararg cells: String): UnifiedKmpDocument`
-- `fun addDivider(): UnifiedKmpDocument`
-- `fun addNewPage(): UnifiedKmpDocument`
+- `fun addLogo(bytes: ByteArray, type: ImageType): UnifiedDocument`
+- `fun addHeader(text: String): UnifiedDocument`
+- `fun addText(text: String): UnifiedDocument`
+- `fun addTableRow(vararg cells: String): UnifiedDocument`
+- `fun addDivider(): UnifiedDocument`
+- `fun addNewPage(): UnifiedDocument`
 - `fun buildHtml(): String`
 
 `buildHtml()` emits a complete, self-contained HTML document:
@@ -90,7 +90,7 @@ API:
 - Table rows: `<div class="row">` with `display:flex`; each cell `<span class="cell">`
   is `flex:1`; the last cell right-aligned (`text-align:right`) for prices/totals.
 - Divider: dashed `<hr class="divider">`.
-- Logo: `<img class="logo" src="data:{mime};base64,{KmpBase64.encode(bytes)}">`.
+- Logo: `<img class="logo" src="data:{mime};base64,{Base64.encode(bytes)}">`.
 - Page break: `<div class="page-break"></div>` with `page-break-after:always`
   (harmless/ignored on continuous media).
 - Header: `<h2 class="header">`; Text: `<p class="text">`.
@@ -98,10 +98,10 @@ API:
 
 This class holds essentially all layout logic and is fully unit-testable in commonTest.
 
-## 5. KmpBase64 (expect/actual object)
+## 5. Base64 (expect/actual object)
 
 ```kotlin
-expect object KmpBase64 { fun encode(bytes: ByteArray): String }
+expect object Base64 { fun encode(bytes: ByteArray): String }
 ```
 
 - desktop + android: `java.util.Base64.getEncoder().encodeToString(bytes)`.
@@ -113,12 +113,12 @@ Tested in commonTest (`expect` used from common test runs on every target),
 covering known vectors ("", "M", "Ma", "Man", "hello") and a 1 KB round-trip check
 against an independent reference table.
 
-## 6. KmpPrintEngine (expect class + four actuals)
+## 6. PrintEngine (expect class + four actuals)
 
 Common surface:
 
 ```kotlin
-expect class KmpPrintEngine {
+expect class PrintEngine {
   suspend fun execute(html: String, target: PrintTarget, type: DocumentType): PrintResult
 }
 ```
@@ -168,7 +168,7 @@ Shared `App()` composable with a title and two buttons plus a status line:
   `A4_DOCUMENT` + `SaveToFile` (and `StandardSystemDriver` for print).
 
 Engine wiring: Android obtains `Context` from a small `LocalContext`/Activity provider;
-iOS, desktop, web construct `KmpPrintEngine` directly. A sample logo lives as a
+iOS, desktop, web construct `PrintEngine` directly. A sample logo lives as a
 Base64 string constant in `commonMain` (decoded to bytes) so the demo is fully offline.
 Entry points: `MainActivity` (Android), `MainViewController` (iOS), `main()` window
 (desktop), `main()` + `index.html` (wasmJs/js).
@@ -180,10 +180,10 @@ Entry points: `MainActivity` (Android), `MainViewController` (iOS), `main()` win
   `vanniktech-maven-publish` and `openhtmltopdf`.
 - Spotless + ktfmt googleStyle, 2-space indent, applied to `**/*.kt` and `*.gradle.kts`.
 - **TDD** with `kotlin-test` in commonTest — written before implementation:
-  - `UnifiedKmpDocument`: presence of html/head/body, per-`DocumentType` width & `@page`,
+  - `UnifiedDocument`: presence of html/head/body, per-`DocumentType` width & `@page`,
     flex row markup + right-aligned last cell, divider, page-break, HTML escaping,
     logo data-URI construction, builder chaining/order preservation.
-  - `KmpBase64`: known-vector encoding + round-trip.
+  - `Base64`: known-vector encoding + round-trip.
   - Domain: driver/target/result construction, `DocumentType` helpers, `ImageType` MIME.
   - Runs on the fast `desktopTest` target in CI (and compiles for all targets).
 - **Publishing**: vanniktech plugin → Maven Central (Central Portal), GPG signing,

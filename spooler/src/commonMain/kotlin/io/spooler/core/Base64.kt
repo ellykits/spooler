@@ -1,5 +1,5 @@
 package io.spooler.core
 
-expect object KmpBase64 {
+expect object Base64 {
   fun encode(bytes: ByteArray): String
 }

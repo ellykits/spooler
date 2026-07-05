@@ -10,7 +10,7 @@ import org.w3c.dom.HTMLIFrameElement
 import org.w3c.dom.url.URL
 import org.w3c.files.Blob
 
-actual class KmpPrintEngine {
+actual class PrintEngine {
   actual suspend fun execute(html: String, target: PrintTarget, type: DocumentType): PrintResult =
     try {
       when (target) {

@@ -1,12 +1,12 @@
 package io.spooler.demo
 
 import io.spooler.core.DocumentType
-import io.spooler.core.UnifiedKmpDocument
+import io.spooler.core.UnifiedDocument
 
 private const val BRAND_ACCENT = "#0F766E"
 
-fun invoiceDocument(): UnifiedKmpDocument =
-  UnifiedKmpDocument(DocumentType.A4_DOCUMENT, title = "TAX INVOICE", accentColor = BRAND_ACCENT)
+fun invoiceDocument(): UnifiedDocument =
+  UnifiedDocument(DocumentType.A4_DOCUMENT, title = "TAX INVOICE", accentColor = BRAND_ACCENT)
     .addLogo(sampleLogoBytes(), sampleLogoType)
     .addHeader("Northwind Hardware Ltd")
     .addText("12 Kiln Road, Riverside Industrial Park, Portford 40100 • VAT PIN: P000123456Z")
@@ -26,8 +26,8 @@ fun invoiceDocument(): UnifiedKmpDocument =
     .addDivider()
     .addText("Payment due within 30 days. Bank: Equity 012345678, Northwind Hardware Ltd.")
 
-fun purchaseOrderDocument(): UnifiedKmpDocument =
-  UnifiedKmpDocument(DocumentType.A4_DOCUMENT, title = "PURCHASE ORDER", accentColor = BRAND_ACCENT)
+fun purchaseOrderDocument(): UnifiedDocument =
+  UnifiedDocument(DocumentType.A4_DOCUMENT, title = "PURCHASE ORDER", accentColor = BRAND_ACCENT)
     .addLogo(sampleLogoBytes(), sampleLogoType)
     .addHeader("Northwind Hardware Ltd")
     .addText("12 Kiln Road, Riverside Industrial Park, Portford 40100 • VAT PIN: P000123456Z")
@@ -53,8 +53,8 @@ fun purchaseOrderDocument(): UnifiedKmpDocument =
     .addText("3. Payment terms: 30 days net from date of delivery and invoice receipt.")
     .addText("4. Rejected or damaged goods will be returned at the supplier's cost.")
 
-fun stockReportDocument(): UnifiedKmpDocument =
-  UnifiedKmpDocument(DocumentType.A4_DOCUMENT, title = "STOCK REPORT", accentColor = BRAND_ACCENT)
+fun stockReportDocument(): UnifiedDocument =
+  UnifiedDocument(DocumentType.A4_DOCUMENT, title = "STOCK REPORT", accentColor = BRAND_ACCENT)
     .addLogo(sampleLogoBytes(), sampleLogoType)
     .addHeader("Northwind Hardware Ltd - Stock Report")
     .addText("Branch: Portford • Report Date: 2026-07-05")
@@ -69,8 +69,8 @@ fun stockReportDocument(): UnifiedKmpDocument =
     .addDivider()
     .addText("Total SKUs: 6 • Low Stock Items: 3")
 
-fun saleReceiptDocument(): UnifiedKmpDocument =
-  UnifiedKmpDocument(DocumentType.RECEIPT_80MM, title = "Northwind Receipt")
+fun saleReceiptDocument(): UnifiedDocument =
+  UnifiedDocument(DocumentType.RECEIPT_80MM, title = "Northwind Receipt")
     .addLogo(sampleLogoBytes(), sampleLogoType)
     .addHeader("NORTHWIND HARDWARE")
     .addText("Portford Branch • Till 04")
@@ -88,8 +88,8 @@ fun saleReceiptDocument(): UnifiedKmpDocument =
     .addText("M-PESA • Ref QTR4X8P2L")
     .addText("Thank you for shopping with us!")
 
-fun compactReceiptDocument(): UnifiedKmpDocument =
-  UnifiedKmpDocument(DocumentType.RECEIPT_58MM, title = "Northwind Receipt")
+fun compactReceiptDocument(): UnifiedDocument =
+  UnifiedDocument(DocumentType.RECEIPT_58MM, title = "Northwind Receipt")
     .addHeader("NORTHWIND HARDWARE")
     .addText("Kiln Road Kiosk")
     .addDivider()

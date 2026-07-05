@@ -9,7 +9,7 @@ import platform.Foundation.base64EncodedStringWithOptions
 import platform.Foundation.create
 
 @OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
-actual object KmpBase64 {
+actual object Base64 {
   actual fun encode(bytes: ByteArray): String {
     if (bytes.isEmpty()) return ""
     val data =

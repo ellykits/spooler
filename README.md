@@ -44,7 +44,7 @@ The document below is the invoice shown in the screenshot above:
 
 ```kotlin
 val invoice =
-  UnifiedKmpDocument(DocumentType.A4_DOCUMENT, title = "Tax Invoice", accentColor = "#0F766E")
+  UnifiedDocument(DocumentType.A4_DOCUMENT, title = "Tax Invoice", accentColor = "#0F766E")
     .addLogo(logoBytes, ImageType.PNG)
     .addHeader("Northwind Hardware Ltd")
     .addText("12 Kiln Road, Riverside Industrial Park, Portford 40100 • VAT PIN: P000123456Z")
@@ -64,14 +64,14 @@ if (result.isSuccess) println("Done: $result")
 ```
 
 `print(document, target)` is the primary entry point — it builds the HTML and forwards the
-document's `DocumentType` for you. `engine` is a `KmpPrintEngine`; see
+document's `DocumentType` for you. `engine` is a `PrintEngine`; see
 [Constructing the engine](#constructing-the-engine-per-platform).
 
 A thermal receipt is the same builder with a continuous `DocumentType`:
 
 ```kotlin
 val receipt =
-  UnifiedKmpDocument(DocumentType.RECEIPT_80MM, title = "Receipt")
+  UnifiedDocument(DocumentType.RECEIPT_80MM, title = "Receipt")
     .addLogo(logoBytes, ImageType.PNG)
     .addHeader("NORTHWIND HARDWARE")
     .addTableRow("PPR Pipe 1in", "4", "1,200.00")
@@ -94,14 +94,14 @@ hardware business. Rendered output:
 
 | Type | Purpose |
 | --- | --- |
-| `UnifiedKmpDocument(type, title, accentColor?)` | Fluent builder: `addLogo`, `addImage`, `addHeader`, `addText`, `addTableRow`, `addHeaderRow`, `addDivider`, `addNewPage`, `addRawHtml`, `buildHtml` |
+| `UnifiedDocument(type, title, accentColor?)` | Fluent builder: `addLogo`, `addImage`, `addHeader`, `addText`, `addTableRow`, `addHeaderRow`, `addDivider`, `addNewPage`, `addRawHtml`, `buildHtml` |
 | `DocumentType` | `RECEIPT_80MM`, `RECEIPT_58MM`, `A4_DOCUMENT` |
 | `ImageType` | `PNG`, `JPEG`, `SVG` |
 | `PrinterDriver` | `EscPosDriver(paperWidthMm, charactersPerLine, cut, openDrawer)`, `StandardSystemDriver(printerName, copies)` |
 | `PrintTarget` | `SaveToFile(path)`, `SendToPrinter(driver)` |
 | `PrintResult` | `Success`, `Saved(path)`, `Failure(message, cause)` — with `result.isSuccess` |
-| `KmpPrintEngine` | `suspend print(document, target)` (preferred) and `suspend execute(html, target, type)` |
-| `KmpBase64` | `encode(bytes)` |
+| `PrintEngine` | `suspend print(document, target)` (preferred) and `suspend execute(html, target, type)` |
+| `Base64` | `encode(bytes)` |
 
 ## Images and colors
 
@@ -117,7 +117,7 @@ Give page-bound documents a brand accent color and colored table headers (receip
 monochrome for thermal printers, so leave `accentColor` unset for them):
 
 ```kotlin
-UnifiedKmpDocument(DocumentType.A4_DOCUMENT, accentColor = "#0F766E")
+UnifiedDocument(DocumentType.A4_DOCUMENT, accentColor = "#0F766E")
   .addHeaderRow("Description", "Qty", "Total") // rendered in the accent color
   .addTableRow("PPR Pipe 1in", "40", "12,000.00")
 ```
@@ -133,18 +133,18 @@ engine.execute(myExistingHtml, PrintTarget.SaveToFile("report.pdf"), DocumentTyp
 …or fold an existing HTML fragment into a spooler document (inserted verbatim):
 
 ```kotlin
-UnifiedKmpDocument(DocumentType.A4_DOCUMENT)
+UnifiedDocument(DocumentType.A4_DOCUMENT)
   .addHeader("Summary")
   .addRawHtml("<table class=\"legacy\">…your markup…</table>")
 ```
 
 ## Constructing the engine per platform
 
-`KmpPrintEngine` is an `expect class`; its constructor differs only because Android needs a
+`PrintEngine` is an `expect class`; its constructor differs only because Android needs a
 `Context` to drive `WebView`/`PrintManager`:
 
-- Android: `KmpPrintEngine(context)`
-- iOS / Desktop / Web: `KmpPrintEngine()`
+- Android: `PrintEngine(context)`
+- iOS / Desktop / Web: `PrintEngine()`
 
 A common pattern is a small `expect fun` factory in your app (the `:demo` module's
 `EngineFactory` shows this) so shared code has one entry point.

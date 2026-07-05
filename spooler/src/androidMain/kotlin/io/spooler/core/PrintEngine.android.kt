@@ -18,7 +18,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 
-actual class KmpPrintEngine(private val context: Context) {
+actual class PrintEngine(private val context: Context) {
   actual suspend fun execute(html: String, target: PrintTarget, type: DocumentType): PrintResult =
     withContext(Dispatchers.Main) {
       try {

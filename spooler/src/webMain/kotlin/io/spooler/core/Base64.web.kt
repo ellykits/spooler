@@ -2,7 +2,7 @@ package io.spooler.core
 
 private const val TABLE = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
 
-actual object KmpBase64 {
+actual object Base64 {
   actual fun encode(bytes: ByteArray): String {
     if (bytes.isEmpty()) return ""
     val out = StringBuilder((bytes.size + 2) / 3 * 4)

@@ -30,7 +30,7 @@ class DesktopEngineIntegrationTest {
   @Test
   fun rendersA4InvoiceWithLogoToRealPdf() = runBlocking {
     val html =
-      UnifiedKmpDocument(DocumentType.A4_DOCUMENT, title = "Invoice")
+      UnifiedDocument(DocumentType.A4_DOCUMENT, title = "Invoice")
         .addLogo(logoPng, ImageType.PNG)
         .addHeader("Northwind Hardware Ltd")
         .addTableRow("Description", "Qty", "Total")
@@ -40,8 +40,7 @@ class DesktopEngineIntegrationTest {
         .buildHtml()
     val path = tempPath(".pdf")
 
-    val result =
-      KmpPrintEngine().execute(html, PrintTarget.SaveToFile(path), DocumentType.A4_DOCUMENT)
+    val result = PrintEngine().execute(html, PrintTarget.SaveToFile(path), DocumentType.A4_DOCUMENT)
 
     assertTrue(result is PrintResult.Saved, "expected Saved but was $result")
     val bytes = File(path).readBytes()
@@ -53,7 +52,7 @@ class DesktopEngineIntegrationTest {
   @Test
   fun rendersThermalReceiptToRealPdf() = runBlocking {
     val html =
-      UnifiedKmpDocument(DocumentType.RECEIPT_80MM, title = "Receipt")
+      UnifiedDocument(DocumentType.RECEIPT_80MM, title = "Receipt")
         .addHeader("NORTHWIND HARDWARE")
         .addTableRow("PTFE Tape", "3", "150.00")
         .addDivider()
@@ -62,7 +61,7 @@ class DesktopEngineIntegrationTest {
     val path = tempPath(".pdf")
 
     val result =
-      KmpPrintEngine().execute(html, PrintTarget.SaveToFile(path), DocumentType.RECEIPT_80MM)
+      PrintEngine().execute(html, PrintTarget.SaveToFile(path), DocumentType.RECEIPT_80MM)
 
     assertTrue(result is PrintResult.Saved, "expected Saved but was $result")
     assertTrue(File(path).length() > 500, "receipt PDF should be non-trivial")
