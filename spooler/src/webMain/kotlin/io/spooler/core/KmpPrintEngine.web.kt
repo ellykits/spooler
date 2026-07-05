@@ -41,17 +41,20 @@ actual class KmpPrintEngine {
       iframe.style.width = "0"
       iframe.style.height = "0"
       iframe.style.border = "0"
+      fun remove() = document.body?.removeChild(iframe)
       iframe.onload = {
         val win = iframe.contentWindow
         if (win == null) {
+          remove()
           cont.resume(PrintResult.Failure("iframe has no content window"))
         } else {
           win.focus()
           win.print()
-          document.body?.removeChild(iframe)
+          remove()
           cont.resume(PrintResult.Success)
         }
       }
+      cont.invokeOnCancellation { remove() }
       document.body?.appendChild(iframe)
       val doc = iframe.contentDocument
       if (doc != null) {
