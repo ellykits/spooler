@@ -20,7 +20,7 @@ Android, iOS, Desktop (JVM), and Web (Wasm/JS).
 // settings.gradle.kts -> mavenCentral() in dependencyResolutionManagement
 
 // build.gradle.kts (commonMain)
-implementation("io.spooler:spooler:1.0.0-alpha01")
+implementation("io.github.ellykits:spooler:1.0.0-alpha01")
 ```
 
 ## Quickstart
