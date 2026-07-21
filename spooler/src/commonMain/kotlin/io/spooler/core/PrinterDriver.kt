@@ -19,10 +19,20 @@ sealed interface PrinterDriver
 
 data class EscPosDriver(
   val paperWidthMm: Int = 80,
-  val charactersPerLine: Int = 48,
+  // null means "derive from paperWidthMm"; any explicit value overrides it (0 means never wrap).
+  val charactersPerLine: Int? = null,
   val cut: Boolean = true,
   val openDrawer: Boolean = false,
+  val printerName: String? = null,
 ) : PrinterDriver
 
 data class StandardSystemDriver(val printerName: String? = null, val copies: Int = 1) :
   PrinterDriver
+
+data class NetworkEscPosDriver(
+  val host: String,
+  val port: Int = 9100,
+  val charactersPerLine: Int = 48,
+  val cut: Boolean = true,
+  val openDrawer: Boolean = false,
+) : PrinterDriver

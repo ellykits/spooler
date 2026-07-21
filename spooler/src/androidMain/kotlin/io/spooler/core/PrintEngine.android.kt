@@ -23,28 +23,167 @@ import android.print.PageRange
 import android.print.PrintAttributes
 import android.print.PrintDocumentAdapter
 import android.print.PrintManager
+import android.print.layoutCallback
+import android.print.writeCallback
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import java.io.File
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 
 actual class PrintEngine(private val context: Context) {
+  actual fun registerFont(font: RegisteredFont) {}
+
   actual suspend fun execute(html: String, target: PrintTarget, type: DocumentType): PrintResult =
+    when (target) {
+      is PrintTarget.SendToPrinter ->
+        when (val driver = target.driver) {
+          is NetworkEscPosDriver ->
+            try {
+              sendToNetworkPrinter(driver.toEscPosBytes(html), driver.host, driver.port)
+            } catch (c: CancellationException) {
+              throw c
+            } catch (t: Throwable) {
+              PrintResult.Failure(t.message ?: "Android print failed", t)
+            }
+
+          is EscPosDriver,
+          is StandardSystemDriver ->
+            withContext(Dispatchers.Main) {
+              try {
+                printAdapter(renderWebView(html), type, driverName(driver))
+              } catch (t: Throwable) {
+                PrintResult.Failure(t.message ?: "Android print failed", t)
+              }
+            }
+        }
+
+      is PrintTarget.SaveToFile ->
+        when (val rendered = render(html, type)) {
+          is PrintResult.Rendered ->
+            try {
+              File(target.path).apply { parentFile?.mkdirs() }.writeBytes(rendered.bytes)
+              PrintResult.Saved(target.path)
+            } catch (t: Throwable) {
+              PrintResult.Failure(t.message ?: "Could not write ${target.path}", t)
+            }
+
+          else -> rendered
+        }
+    }
+
+  actual suspend fun render(html: String, type: DocumentType): PrintResult =
     withContext(Dispatchers.Main) {
       try {
         val webView = renderWebView(html)
-        when (target) {
-          is PrintTarget.SendToPrinter -> printAdapter(webView, type, driverName(target.driver))
-          is PrintTarget.SaveToFile -> printAdapter(webView, type, jobName(target.path))
-        }
+        val adapter =
+          destroyingAdapter(webView, webView.createPrintDocumentAdapter("spooler-render"))
+        val bytes = writeAdapterToBytes(adapter, attributesFor(type))
+        PrintResult.Rendered(bytes)
       } catch (t: Throwable) {
-        PrintResult.Failure(t.message ?: "Android print failed", t)
+        PrintResult.Failure(t.message ?: "Android render failed", t)
       }
+    }
+
+  private fun attributesFor(type: DocumentType): PrintAttributes {
+    val media =
+      if (type.isContinuous) PrintAttributes.MediaSize.ISO_A6 else PrintAttributes.MediaSize.ISO_A4
+    return PrintAttributes.Builder()
+      .setMediaSize(media)
+      .setResolution(PrintAttributes.Resolution("spooler", "spooler", 300, 300))
+      .setMinMargins(PrintAttributes.Margins.NO_MARGINS)
+      .build()
+  }
+
+  private suspend fun writeAdapterToBytes(
+    adapter: PrintDocumentAdapter,
+    attributes: PrintAttributes,
+  ): ByteArray {
+    val file = File.createTempFile("spooler-render", ".pdf", context.cacheDir)
+    try {
+      adapter.onStart()
+      layout(adapter, attributes)
+      write(adapter, file)
+      return file.readBytes()
+    } finally {
+      adapter.onFinish()
+      file.delete()
+    }
+  }
+
+  private suspend fun layout(adapter: PrintDocumentAdapter, attributes: PrintAttributes): Unit =
+    suspendCancellableCoroutine { cont ->
+      val signal = CancellationSignal()
+      cont.invokeOnCancellation { signal.cancel() }
+      adapter.onLayout(
+        null,
+        attributes,
+        signal,
+        layoutCallback(
+          onFinished = { if (!cont.isCompleted) cont.resume(Unit) },
+          onFailed = { error ->
+            if (!cont.isCompleted) {
+              cont.resumeWithException(IllegalStateException(error?.toString() ?: "Layout failed"))
+            }
+          },
+          onCancelled = {
+            if (!cont.isCompleted) {
+              cont.resumeWithException(IllegalStateException("Layout cancelled"))
+            }
+          },
+        ),
+        Bundle(),
+      )
+    }
+
+  private suspend fun write(adapter: PrintDocumentAdapter, file: File): Unit =
+    suspendCancellableCoroutine { cont ->
+      val descriptor =
+        ParcelFileDescriptor.open(
+          file,
+          ParcelFileDescriptor.MODE_READ_WRITE or ParcelFileDescriptor.MODE_TRUNCATE,
+        )
+      var descriptorClosed = false
+      fun closeDescriptor() {
+        if (!descriptorClosed) {
+          descriptorClosed = true
+          descriptor.close()
+        }
+      }
+      val signal = CancellationSignal()
+      cont.invokeOnCancellation {
+        closeDescriptor()
+        signal.cancel()
+      }
+      adapter.onWrite(
+        arrayOf(PageRange.ALL_PAGES),
+        descriptor,
+        signal,
+        writeCallback(
+          onFinished = {
+            closeDescriptor()
+            if (!cont.isCompleted) cont.resume(Unit)
+          },
+          onFailed = { error ->
+            closeDescriptor()
+            if (!cont.isCompleted) {
+              cont.resumeWithException(IllegalStateException(error?.toString() ?: "Write failed"))
+            }
+          },
+          onCancelled = {
+            closeDescriptor()
+            if (!cont.isCompleted) {
+              cont.resumeWithException(IllegalStateException("Write cancelled"))
+            }
+          },
+        ),
+      )
     }
 
   private suspend fun renderWebView(html: String): WebView = suspendCancellableCoroutine { cont ->
@@ -64,6 +203,7 @@ actual class PrintEngine(private val context: Context) {
             cont.resumeWithException(
               IllegalStateException("WebView load failed: ${error.description}")
             )
+            view.post { view.destroy() }
           }
         }
       }
@@ -113,8 +253,6 @@ actual class PrintEngine(private val context: Context) {
     when (driver) {
       is StandardSystemDriver -> driver.printerName ?: "spooler-document"
       is EscPosDriver -> "spooler-receipt"
+      is NetworkEscPosDriver -> "spooler-receipt"
     }
-
-  private fun jobName(path: String): String =
-    path.substringAfterLast('/').ifBlank { "spooler-file" }
 }

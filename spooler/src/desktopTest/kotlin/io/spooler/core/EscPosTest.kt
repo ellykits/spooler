@@ -26,14 +26,14 @@ class EscPosTest {
     listOf(0x1B.toByte(), 'p'.code.toByte(), 0x00.toByte(), 0x19.toByte(), 0xFA.toByte())
 
   @Test
-  fun `starts with init bytes`() {
+  fun startsWithInitBytes() {
     val bytes = buildEscPos("hello", EscPosDriver(cut = false, openDrawer = false))
     assertEquals(0x1B.toByte(), bytes[0])
     assertEquals('@'.code.toByte(), bytes[1])
   }
 
   @Test
-  fun `each line is followed by a line feed`() {
+  fun eachLineIsFollowedByALineFeed() {
     val bytes =
       buildEscPos("line one\nline two", EscPosDriver(cut = false, openDrawer = false)).toList()
     val lineOneEnd = "line one".encodeToByteArray().toList()
@@ -43,31 +43,31 @@ class EscPosTest {
   }
 
   @Test
-  fun `includes cut command when cut is true`() {
+  fun includesCutCommandWhenCutIsTrue() {
     val bytes = buildEscPos("hello", EscPosDriver(cut = true, openDrawer = false)).toList()
     assertTrue(containsSubsequence(bytes, cutBytes))
   }
 
   @Test
-  fun `omits cut command when cut is false`() {
+  fun omitsCutCommandWhenCutIsFalse() {
     val bytes = buildEscPos("hello", EscPosDriver(cut = false, openDrawer = false)).toList()
     assertFalse(containsSubsequence(bytes, cutBytes))
   }
 
   @Test
-  fun `includes drawer kick command when openDrawer is true`() {
+  fun includesDrawerKickCommandWhenOpenDrawerIsTrue() {
     val bytes = buildEscPos("hello", EscPosDriver(cut = false, openDrawer = true)).toList()
     assertTrue(containsSubsequence(bytes, drawerBytes))
   }
 
   @Test
-  fun `omits drawer kick command when openDrawer is false`() {
+  fun omitsDrawerKickCommandWhenOpenDrawerIsFalse() {
     val bytes = buildEscPos("hello", EscPosDriver(cut = false, openDrawer = false)).toList()
     assertFalse(containsSubsequence(bytes, drawerBytes))
   }
 
   @Test
-  fun `wraps long lines to charactersPerLine`() {
+  fun wrapsLongLinesToCharactersPerLine() {
     val line = "a".repeat(100)
     val bytes =
       buildEscPos(line, EscPosDriver(charactersPerLine = 32, cut = false, openDrawer = false))
@@ -79,7 +79,7 @@ class EscPosTest {
   }
 
   @Test
-  fun `short line is emitted once`() {
+  fun shortLineIsEmittedOnce() {
     val bytes =
       buildEscPos("hi", EscPosDriver(charactersPerLine = 32, cut = false, openDrawer = false))
     val text = bytes.toString(Charsets.US_ASCII)
@@ -88,7 +88,7 @@ class EscPosTest {
   }
 
   @Test
-  fun `non-ascii characters are replaced with question marks`() {
+  fun nonAsciiCharactersAreReplacedWithQuestionMarks() {
     val bytes = buildEscPos("Café", EscPosDriver()).toList()
     assertFalse(bytes.any { it.toInt() and 0xFF > 0x7F })
     val text = bytes.toByteArray().toString(Charsets.US_ASCII)
@@ -101,5 +101,43 @@ class EscPosTest {
       if (haystack.subList(start, start + needle.size) == needle) return true
     }
     return false
+  }
+
+  @Test
+  fun stripsHtmlDownToPrintableText() {
+    val text =
+      htmlToText("<html><head><style>x{}</style></head><body><p>Total</p><p>100</p></body></html>")
+
+    assertEquals("Total\n100", text)
+  }
+
+  @Test
+  fun derivesCharactersPerLineFromPaperWidthWhenNotSet() {
+    val line = "X".repeat(70)
+
+    val narrow = buildEscPos(line, EscPosDriver(paperWidthMm = 58))
+    val narrowChunks = Regex("X+").findAll(narrow.decodeToString()).map { it.value }.toList()
+    assertEquals(32, narrowChunks.first().length, "58mm paper should wrap at 32 characters")
+    assertTrue(narrowChunks.all { it.length <= 32 })
+
+    val wide = buildEscPos(line, EscPosDriver(paperWidthMm = 80))
+    val wideChunks = Regex("X+").findAll(wide.decodeToString()).map { it.value }.toList()
+    assertEquals(48, wideChunks.first().length, "80mm paper should wrap at 48 characters")
+    assertTrue(wideChunks.all { it.length <= 48 })
+  }
+
+  @Test
+  fun explicitCharactersPerLineOverridesPaperWidthDerivation() {
+    val line = "X".repeat(70)
+
+    val overridden = buildEscPos(line, EscPosDriver(paperWidthMm = 80, charactersPerLine = 20))
+    val overriddenChunks =
+      Regex("X+").findAll(overridden.decodeToString()).map { it.value }.toList()
+    assertEquals(20, overriddenChunks.first().length, "explicit charactersPerLine should win")
+
+    val neverWraps = buildEscPos(line, EscPosDriver(paperWidthMm = 80, charactersPerLine = 0))
+    val neverWrapsChunks =
+      Regex("X+").findAll(neverWraps.decodeToString()).map { it.value }.toList()
+    assertEquals(listOf(line), neverWrapsChunks, "explicit 0 must still mean never wrap")
   }
 }

@@ -236,18 +236,14 @@ private suspend fun printSample(engine: PrintEngine, sample: Sample): ActionStat
   val target =
     if (type.isContinuous) {
       val narrow = type == DocumentType.RECEIPT_58MM
-      PrintTarget.SendToPrinter(
-        EscPosDriver(
-          paperWidthMm = if (narrow) 58 else 80,
-          charactersPerLine = if (narrow) 32 else 48,
-        )
-      )
+      PrintTarget.SendToPrinter(EscPosDriver(paperWidthMm = if (narrow) 58 else 80))
     } else {
       PrintTarget.SaveToFile("${sample.label.replace(" ", "-")}.pdf")
     }
   return when (val result = engine.print(sample.document, target)) {
     is PrintResult.Saved -> ActionStatus("Saved ${result.path}", isError = false)
     PrintResult.Success -> ActionStatus("Sent to printer", isError = false)
+    is PrintResult.Rendered -> ActionStatus("Rendered ${result.bytes.size} bytes", isError = false)
     is PrintResult.Failure -> ActionStatus(result.message, isError = true)
   }
 }

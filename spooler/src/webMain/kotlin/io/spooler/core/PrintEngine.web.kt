@@ -26,6 +26,8 @@ import org.w3c.dom.url.URL
 import org.w3c.files.Blob
 
 actual class PrintEngine {
+  actual fun registerFont(font: RegisteredFont) {}
+
   actual suspend fun execute(html: String, target: PrintTarget, type: DocumentType): PrintResult =
     try {
       when (target) {
@@ -36,11 +38,21 @@ actual class PrintEngine {
             downloadHtml(html, target.path)
           }
 
-        is PrintTarget.SendToPrinter -> printViaIframe(html)
+        is PrintTarget.SendToPrinter ->
+          when (target.driver) {
+            is NetworkEscPosDriver ->
+              PrintResult.Failure("Network printing is not available in the browser")
+
+            is EscPosDriver,
+            is StandardSystemDriver -> printViaIframe(html)
+          }
       }
     } catch (t: Throwable) {
       PrintResult.Failure(t.message ?: "Web print failed", t)
     }
+
+  actual suspend fun render(html: String, type: DocumentType): PrintResult =
+    PrintResult.Failure("PDF rendering is not available in the browser")
 
   @OptIn(ExperimentalWasmJsInterop::class)
   private fun downloadHtml(html: String, path: String): PrintResult {

@@ -35,12 +35,15 @@ private val allowedAccentChars = Regex("[^#0-9a-zA-Z(),.% ]")
 internal fun sanitizeAccentColor(accentColor: String?): String? =
   accentColor?.replace(allowedAccentChars, "")
 
+/** Default font stack used when no [RegisteredFont] takes precedence. */
+internal const val SYSTEM_FONT_STACK = """-apple-system, "Segoe UI", Roboto, sans-serif"""
+
 internal fun DocumentType.styleBlock(accentColor: String? = null): String {
   val accent = sanitizeAccentColor(accentColor)
   val base =
     """
     * { box-sizing: border-box; }
-    body { margin: 0; padding: 8px; width: $cssWidth; font-family: -apple-system, "Segoe UI", Roboto, sans-serif; font-size: 12px; color: #000; }
+    body { margin: 0; padding: 8px; width: $cssWidth; font-family: $SYSTEM_FONT_STACK; font-size: 12px; color: #000; }
     .logo { display: block; max-width: 100%; margin: 0 auto 8px; }
     .image { display: block; max-width: 100%; margin: 6px 0; }
     .graphic { text-align: center; margin: 8px 0; }

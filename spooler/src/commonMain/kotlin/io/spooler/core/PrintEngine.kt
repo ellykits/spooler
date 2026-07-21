@@ -17,7 +17,20 @@ package io.spooler.core
 
 expect class PrintEngine {
   suspend fun execute(html: String, target: PrintTarget, type: DocumentType): PrintResult
+
+  suspend fun render(html: String, type: DocumentType): PrintResult
+
+  /**
+   * Registers a font for use by every subsequent [execute]/[render] call on this engine, taking
+   * precedence over the default system font stack. Only the desktop renderer applies registered
+   * fonts today; other platforms render through engines with their own font resolution and treat
+   * this as a no-op.
+   */
+  fun registerFont(font: RegisteredFont)
 }
 
 suspend fun PrintEngine.print(document: UnifiedDocument, target: PrintTarget): PrintResult =
   execute(document.buildHtml(), target, document.type)
+
+suspend fun PrintEngine.renderDocument(document: UnifiedDocument): PrintResult =
+  render(document.buildHtml(), document.type)

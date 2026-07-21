@@ -20,8 +20,17 @@ sealed interface PrintResult {
 
   data class Saved(val path: String) : PrintResult
 
+  class Rendered(val bytes: ByteArray) : PrintResult {
+    override fun equals(other: Any?): Boolean =
+      this === other || (other is Rendered && bytes.contentEquals(other.bytes))
+
+    override fun hashCode(): Int = bytes.contentHashCode()
+
+    override fun toString(): String = "Rendered(bytes=${bytes.size})"
+  }
+
   data class Failure(val message: String, val cause: Throwable? = null) : PrintResult
 }
 
 val PrintResult.isSuccess: Boolean
-  get() = this is PrintResult.Success || this is PrintResult.Saved
+  get() = this is PrintResult.Success || this is PrintResult.Saved || this is PrintResult.Rendered

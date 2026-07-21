@@ -17,10 +17,14 @@ package io.spooler.core
 
 import kotlin.coroutines.resume
 import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.cinterop.addressOf
+import kotlinx.cinterop.usePinned
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import platform.CoreGraphics.CGRectMake
+import platform.Foundation.NSData
 import platform.Foundation.NSError
 import platform.Foundation.NSMutableData
 import platform.Foundation.NSValue
@@ -38,18 +42,40 @@ import platform.UIKit.UIPrintInteractionController
 import platform.UIKit.UIPrintPageRenderer
 import platform.UIKit.UIUserInterfaceIdiomPad
 import platform.UIKit.valueWithCGRect
+import platform.posix.memcpy
 
 @OptIn(ExperimentalForeignApi::class)
 actual class PrintEngine {
+  actual fun registerFont(font: RegisteredFont) {}
+
   actual suspend fun execute(html: String, target: PrintTarget, type: DocumentType): PrintResult =
     withContext(Dispatchers.Main) {
       try {
         when (target) {
-          is PrintTarget.SendToPrinter -> present(html, type)
+          is PrintTarget.SendToPrinter ->
+            when (val driver = target.driver) {
+              is NetworkEscPosDriver ->
+                sendToNetworkPrinter(driver.toEscPosBytes(html), driver.host, driver.port)
+
+              is EscPosDriver,
+              is StandardSystemDriver -> present(html, type)
+            }
+
           is PrintTarget.SaveToFile -> renderPdf(html, type, target.path)
         }
+      } catch (c: CancellationException) {
+        throw c
       } catch (t: Throwable) {
         PrintResult.Failure(t.message ?: "iOS print failed", t)
+      }
+    }
+
+  actual suspend fun render(html: String, type: DocumentType): PrintResult =
+    withContext(Dispatchers.Main) {
+      try {
+        PrintResult.Rendered(renderPdfData(html, type).toByteArray())
+      } catch (t: Throwable) {
+        PrintResult.Failure(t.message ?: "iOS render failed", t)
       }
     }
 
@@ -93,26 +119,39 @@ actual class PrintEngine {
     }
 
   private fun renderPdf(html: String, type: DocumentType, path: String): PrintResult {
+    val ok = renderPdfData(html, type).writeToFile(path, atomically = true)
+    return if (ok) PrintResult.Saved(path) else PrintResult.Failure("Could not write PDF to $path")
+  }
+
+  private fun renderPdfData(html: String, type: DocumentType): NSMutableData {
     val renderer = UIPrintPageRenderer()
-    val formatter = UIMarkupTextPrintFormatter(markupText = html)
-    renderer.addPrintFormatter(formatter, startingAtPageAtIndex = 0)
+    renderer.addPrintFormatter(
+      UIMarkupTextPrintFormatter(markupText = html),
+      startingAtPageAtIndex = 0,
+    )
     val pageWidth = if (type.isContinuous) 226.0 else 595.0
     val pageHeight = if (type.isContinuous) 800.0 else 842.0
     val paper = CGRectMake(0.0, 0.0, pageWidth, pageHeight)
-    val printable = CGRectMake(0.0, 0.0, pageWidth, pageHeight)
     renderer.setValue(NSValue.valueWithCGRect(paper), forKey = "paperRect")
-    renderer.setValue(NSValue.valueWithCGRect(printable), forKey = "printableRect")
+    renderer.setValue(NSValue.valueWithCGRect(paper), forKey = "printableRect")
     val data = NSMutableData()
     UIGraphicsBeginPDFContextToData(data, paper, null)
     try {
       val pages = renderer.numberOfPages().coerceAtLeast(1)
-      for (i in 0 until pages) {
-        renderer.drawPageAtIndex(i, inRect = paper)
-      }
+      for (i in 0 until pages) renderer.drawPageAtIndex(i, inRect = paper)
     } finally {
       if (UIGraphicsGetCurrentContext() != null) UIGraphicsEndPDFContext()
     }
-    val ok = data.writeToFile(path, atomically = true)
-    return if (ok) PrintResult.Saved(path) else PrintResult.Failure("Could not write PDF to $path")
+    return data
+  }
+}
+
+@OptIn(ExperimentalForeignApi::class)
+private fun NSData.toByteArray(): ByteArray {
+  if (length > Int.MAX_VALUE.toULong()) return ByteArray(0)
+  val size = length.toInt()
+  if (size == 0) return ByteArray(0)
+  return ByteArray(size).apply {
+    usePinned { pinned -> memcpy(pinned.addressOf(0), this@toByteArray.bytes, size.toULong()) }
   }
 }

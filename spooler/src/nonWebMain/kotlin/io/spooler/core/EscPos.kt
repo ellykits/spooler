@@ -29,12 +29,16 @@ private fun wrapLine(line: String, charactersPerLine: Int): List<String> {
   return line.chunked(charactersPerLine)
 }
 
+private fun charactersFor(driver: EscPosDriver): Int =
+  driver.charactersPerLine ?: if (driver.paperWidthMm <= 58) 32 else 48
+
 internal fun buildEscPos(text: String, driver: EscPosDriver): ByteArray {
   val out = ArrayList<Byte>()
   out.add(EscPosBytes.ESC)
   out.add('@'.code.toByte())
+  val charactersPerLine = charactersFor(driver)
   for (line in text.lines()) {
-    for (chunk in wrapLine(toPrinterAscii(line), driver.charactersPerLine)) {
+    for (chunk in wrapLine(toPrinterAscii(line), charactersPerLine)) {
       chunk.encodeToByteArray().forEach { out.add(it) }
       out.add(EscPosBytes.LF)
     }

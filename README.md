@@ -35,7 +35,7 @@ printer, or save them to a file. Runs on Android, iOS, Desktop (JVM), and Web (W
 // settings.gradle.kts -> dependencyResolutionManagement { repositories { mavenCentral() } }
 
 // build.gradle.kts (commonMain)
-implementation("io.github.ellykits:spooler:1.0.0-alpha01")
+implementation("io.github.ellykits:spooler:1.0.0-alpha02")
 ```
 
 ## Quickstart
@@ -97,10 +97,12 @@ hardware business. Rendered output:
 | `UnifiedDocument(type, title, accentColor?)` | Fluent builder: `addLogo`, `addImage`, `addHeader`, `addText`, `addTableRow`, `addHeaderRow`, `addDivider`, `addNewPage`, `addRawHtml`, `buildHtml` |
 | `DocumentType` | `RECEIPT_80MM`, `RECEIPT_58MM`, `A4_DOCUMENT` |
 | `ImageType` | `PNG`, `JPEG`, `SVG` |
-| `PrinterDriver` | `EscPosDriver(paperWidthMm, charactersPerLine, cut, openDrawer)`, `StandardSystemDriver(printerName, copies)` |
+| `PrinterDriver` | `EscPosDriver(paperWidthMm, charactersPerLine, cut, openDrawer, printerName)`, `StandardSystemDriver(printerName, copies)`, `NetworkEscPosDriver(host, port, charactersPerLine, cut, openDrawer)` |
 | `PrintTarget` | `SaveToFile(path)`, `SendToPrinter(driver)` |
 | `PrintResult` | `Success`, `Saved(path)`, `Failure(message, cause)` — with `result.isSuccess` |
-| `PrintEngine` | `suspend print(document, target)` (preferred) and `suspend execute(html, target, type)` |
+| `PrintEngine` | `suspend print(document, target)` (preferred), `suspend execute(html, target, type)`, `registerFont(font)` |
+| `RegisteredFont(name, bytes, weight?, style?)` | A font file to make available to the renderer |
+| `FontStyle` | `NORMAL`, `ITALIC`, `OBLIQUE` |
 | `Base64` | `encode(bytes)` |
 
 ## Images and colors
@@ -149,19 +151,66 @@ UnifiedDocument(DocumentType.A4_DOCUMENT)
 A common pattern is a small `expect fun` factory in your app (the `:demo` module's
 `EngineFactory` shows this) so shared code has one entry point.
 
+## Printer transport support
+
+| Transport | Driver | Android | iOS | Desktop | Web |
+|---|---|:---:|:---:|:---:|:---:|
+| Network thermal, raw TCP 9100 | `NetworkEscPosDriver` | ✅ | ✅ | ✅ | ❌ |
+| USB / serial thermal, via the OS print queue | `EscPosDriver` | ❌ | ❌ | ✅ | ❌ |
+| USB thermal, driven directly | — | ❌ | ❌ | ❌ | ❌ |
+| Bluetooth Classic (SPP) thermal | — | ❌ | ❌ | ❌ | ❌ |
+| Bluetooth LE thermal | — | ❌ | ❌ | ❌ | ❌ |
+| System print dialog (PDF) | `StandardSystemDriver` | ✅ | ✅ | ✅ | ✅ |
+
+| Capability | Android | iOS | Desktop | Web |
+|---|:---:|:---:|:---:|:---:|
+| `render` → PDF bytes | ✅ | ✅ | ✅ | ❌ |
+| `SaveToFile` writes a PDF | ✅ | ✅ | ✅ | ❌ |
+| `registerFont` embeds a custom typeface | ❌ (no-op) | ❌ (no-op) | ✅ | ❌ (no-op) |
+
+`NetworkEscPosDriver` is the supported route for thermal printing on Android, iOS and Desktop.
+USB reaches a Desktop printer through the OS print queue. Bluetooth is not supported: Classic
+SPP requires MFi certification on iOS, and the browser can open neither a raw socket nor a
+Classic Bluetooth connection.
+
+On Android and iOS a local `EscPosDriver` renders the HTML through the system print dialog
+rather than emitting ESC/POS. Raw bytes are produced locally on Desktop only.
+
 ## Platform behavior notes
 
-- **Android `SaveToFile`** presents the system print dialog (which offers "Save as PDF");
-  WebView has no silent file-write API, so it returns `PrintResult.Success` rather than
-  `Saved(path)`. Desktop and iOS write the file directly and return `Saved(path)`.
+- **Android `SaveToFile`** now renders to bytes and writes them directly, the same as
+  Desktop and iOS. Previously both `PrintTarget` variants routed to `PrintManager`, so
+  `SaveToFile` opened the same dialog as `SendToPrinter` and wrote nothing — the path
+  argument only became the print job's name.
+- **`render(html, type)`** returns PDF bytes (`PrintResult.Rendered`) on Android, iOS, and
+  Desktop. The browser has no PDF renderer, so `render` there always fails with
+  `PrintResult.Failure`.
 - **Web `SaveToFile`** downloads an `.html` file (the browser has no PDF renderer); the
   requested path's extension is coerced to `.html`.
 - **iOS `SendToPrinter`** uses `UIPrintInteractionController`. On iPhone it presents
   animated; on iPad it presents from the key window's root view. Apps built on the modern
   multi-scene lifecycle may need to supply their own presentation anchor.
-- **ESC/POS text** is emitted as ASCII; non-ASCII characters are replaced with `?`, and
-  lines are wrapped to `charactersPerLine`. Thermal printing on Desktop uses this raw path;
-  the other platforms render the HTML.
+- **`NetworkEscPosDriver`** sends raw ESC/POS bytes to a thermal printer over TCP port 9100,
+  the conventional raw-print port for network receipt printers. It works on Android, iOS,
+  and Desktop; the browser rejects it outright, since it can't open a raw socket. Bluetooth
+  Classic (SPP) printers are deliberately not supported — pairing is native-only on
+  Android, and iOS printing over SPP needs MFi certification spooler doesn't have.
+- **`registerFont`** is a no-op on Android, iOS, and Web — they render through platform
+  engines (`WebView`, `UIMarkupTextPrintFormatter`, the browser) that resolve fonts by name
+  from the OS or page and can't accept font bytes through this call. spooler bundles no
+  font of its own, so desktop PDFs fall back to PDFBox's built-in base-14 fonts (Latin-1
+  only) unless a consumer registers one. Registering a font on the Desktop `PrintEngine`
+  loads it into the PDF renderer and overrides the generated CSS's font-family stack —
+  ahead of the default `-apple-system, "Segoe UI", Roboto, sans-serif` — for every
+  subsequent `execute`/`render` call on that engine; register nothing and output is
+  unchanged.
+- **ESC/POS text** is emitted as ASCII; non-ASCII characters are replaced with `?`.
+  `EscPosDriver.charactersPerLine` defaults to `null`, deriving 32 or 48 columns from
+  `paperWidthMm`; an explicit value (including `0`, meaning never wrap) overrides it.
+  `EscPosDriver.printerName` targets a specific print service instead of the OS default.
+  Thermal printing on Desktop, and `NetworkEscPosDriver` on every non-web platform, use
+  this raw path; Android and iOS still render the HTML for a local `EscPosDriver` on
+  `SendToPrinter`.
 
 ## Demo
 

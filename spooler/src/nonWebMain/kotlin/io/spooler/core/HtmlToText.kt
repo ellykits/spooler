@@ -1,0 +1,42 @@
+/*
+* Copyright 2026 Spooler Contributors
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
+package io.spooler.core
+
+private val styleTagRegex = Regex("(?s)<style.*?</style>")
+private val headTagRegex = Regex("(?s)<head.*?</head>")
+private val brTagRegex = Regex("<br\\s*/?>")
+private val hrTagRegex = Regex("<hr[^>]*/?>")
+private val blockCloseTagRegex = Regex("</(div|p|h1|h2|h3|hr|tr)>")
+private val anyTagRegex = Regex("<[^>]+>")
+private val extraBlankLinesRegex = Regex("\n{3,}")
+
+internal fun htmlToText(html: String): String =
+  html
+    .replace(styleTagRegex, "")
+    .replace(headTagRegex, "")
+    .replace(brTagRegex, "\n")
+    .replace(hrTagRegex, "\n")
+    .replace(blockCloseTagRegex, "\n")
+    .replace(anyTagRegex, "")
+    .replace("&lt;", "<")
+    .replace("&gt;", ">")
+    .replace("&quot;", "\"")
+    .replace("&#39;", "'")
+    .replace("&amp;", "&")
+    .lines()
+    .joinToString("\n") { it.trim() }
+    .replace(extraBlankLinesRegex, "\n\n")
+    .trim()

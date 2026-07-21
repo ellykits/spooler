@@ -30,14 +30,22 @@ kotlin {
 
   sourceSets {
     val commonMain by getting { dependencies { implementation(libs.kotlinx.coroutines.core) } }
+    val nonWebMain by creating {
+      dependsOn(commonMain)
+      dependencies { implementation(libs.ktor.network) }
+    }
+    androidMain.get().dependsOn(nonWebMain)
+    iosMain.get().dependsOn(nonWebMain)
     val commonTest by getting { dependencies { implementation(libs.kotlin.test) } }
     val desktopMain by getting {
+      dependsOn(nonWebMain)
       dependencies {
         implementation(libs.kotlinx.coroutines.swing)
         implementation(libs.openhtmltopdf.pdfbox)
         implementation(libs.openhtmltopdf.svg.support)
       }
     }
+    val desktopTest by getting { dependencies { implementation(libs.kotlinx.coroutines.test) } }
     val androidMain by getting { dependencies { implementation(libs.kotlinx.coroutines.android) } }
     val webMain by getting { dependencies { implementation(libs.kotlinx.browser) } }
   }
