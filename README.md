@@ -81,6 +81,39 @@ val receipt =
 engine.print(receipt, PrintTarget.SendToPrinter(EscPosDriver(paperWidthMm = 80)))
 ```
 
+## Labels
+
+Labels are a second, native content model — not HTML. Build a `Label` from positioned
+elements and print it to a network label printer in its own language (ZPL for Zebra, TSPL
+for TSC):
+
+```kotlin
+val label =
+  Label(
+    widthDots = 609,
+    heightDots = 406,
+    dpi = 203,
+    elements =
+      listOf(
+        LabelElement.Barcode(xDots = 40, yDots = 40, data = "ITEM-000123", symbology = BarcodeSymbology.QR, heightDots = 120),
+        LabelElement.Barcode(xDots = 40, yDots = 230, data = "ITEM-000123", symbology = BarcodeSymbology.CODE128, heightDots = 90),
+        LabelElement.Text(xDots = 40, yDots = 340, text = "Nitrile Gloves — M", fontHeightDots = 30),
+      ),
+  )
+
+engine.printLabel(
+  label,
+  PrintTarget.SendToPrinter(NetworkLabelDriver(host = "192.168.1.50", dialect = LabelDialect.ZPL)),
+)
+```
+
+The same `Label` prints to a TSC printer by changing the dialect to `LabelDialect.TSPL` —
+one device-agnostic model, two native renderers. `printLabel` sends over raw TCP 9100 (the
+same transport as `NetworkEscPosDriver`); `SaveToFile` writes the ZPL for inspection; and
+`renderLabel(label, dialect)` returns the raw command string if you want to inspect or
+transport it yourself. Coordinates and sizes are in printer dots; `dpi` (203 or 300)
+converts them for TSPL's millimetre geometry.
+
 ## Sample documents
 
 The `:demo` module builds three business documents and two receipts for a fictitious
@@ -97,10 +130,13 @@ hardware business. Rendered output:
 | `UnifiedDocument(type, title, accentColor?)` | Fluent builder: `addLogo`, `addImage`, `addHeader`, `addText`, `addTableRow`, `addHeaderRow`, `addDivider`, `addNewPage`, `addRawHtml`, `buildHtml` |
 | `DocumentType` | `RECEIPT_80MM`, `RECEIPT_58MM`, `A4_DOCUMENT` |
 | `ImageType` | `PNG`, `JPEG`, `SVG` |
-| `PrinterDriver` | `EscPosDriver(paperWidthMm, charactersPerLine, cut, openDrawer, printerName)`, `StandardSystemDriver(printerName, copies)`, `NetworkEscPosDriver(host, port, charactersPerLine, cut, openDrawer)` |
+| `PrinterDriver` | `EscPosDriver(paperWidthMm, charactersPerLine, cut, openDrawer, printerName)`, `StandardSystemDriver(printerName, copies)`, `NetworkEscPosDriver(host, port, charactersPerLine, cut, openDrawer)`, `NetworkLabelDriver(host, port, dialect)` |
 | `PrintTarget` | `SaveToFile(path)`, `SendToPrinter(driver)` |
 | `PrintResult` | `Success`, `Saved(path)`, `Failure(message, cause)` — with `result.isSuccess` |
-| `PrintEngine` | `suspend print(document, target)` (preferred), `suspend execute(html, target, type)`, `registerFont(font)` |
+| `PrintEngine` | `suspend print(document, target)` (preferred), `suspend execute(html, target, type)`, `suspend printLabel(label, target)`, `registerFont(font)` |
+| `Label(widthDots, heightDots, dpi, elements)` | Native label content: `LabelElement.Barcode(xDots, yDots, data, symbology, heightDots, humanReadable)`, `LabelElement.Text(xDots, yDots, text, fontHeightDots)` |
+| `BarcodeSymbology` | `CODE128`, `QR` |
+| `LabelDialect` | `ZPL` (Zebra), `TSPL` (TSC) — `renderLabel(label, dialect)` returns the raw command string |
 | `RegisteredFont(name, bytes, weight?, style?)` | A font file to make available to the renderer |
 | `FontStyle` | `NORMAL`, `ITALIC`, `OBLIQUE` |
 | `Base64` | `encode(bytes)` |
@@ -156,6 +192,7 @@ A common pattern is a small `expect fun` factory in your app (the `:demo` module
 | Transport | Driver | Android | iOS | Desktop | Web |
 |---|---|:---:|:---:|:---:|:---:|
 | Network thermal, raw TCP 9100 | `NetworkEscPosDriver` | ✅ | ✅ | ✅ | ❌ |
+| Network label (ZPL / TSPL), raw TCP 9100 | `NetworkLabelDriver` | ✅ | ✅ | ✅ | ❌ |
 | USB / serial thermal, via the OS print queue | `EscPosDriver` | ❌ | ❌ | ✅ | ❌ |
 | USB thermal, driven directly | — | ❌ | ❌ | ❌ | ❌ |
 | Bluetooth Classic (SPP) thermal | — | ❌ | ❌ | ❌ | ❌ |
