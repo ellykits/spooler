@@ -62,6 +62,8 @@ actual class PrintEngine(private val context: Context) {
                 PrintResult.Failure(t.message ?: "Android print failed", t)
               }
             }
+
+          is NetworkLabelDriver -> PrintResult.Failure("NetworkLabelDriver requires printLabel")
         }
 
       is PrintTarget.SaveToFile ->
@@ -254,5 +256,6 @@ actual class PrintEngine(private val context: Context) {
       is StandardSystemDriver -> driver.printerName ?: "spooler-document"
       is EscPosDriver -> "spooler-receipt"
       is NetworkEscPosDriver -> "spooler-receipt"
+      is NetworkLabelDriver -> "spooler-label"
     }
 }

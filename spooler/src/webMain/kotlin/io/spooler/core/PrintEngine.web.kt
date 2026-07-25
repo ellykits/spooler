@@ -43,6 +43,8 @@ actual class PrintEngine {
             is NetworkEscPosDriver ->
               PrintResult.Failure("Network printing is not available in the browser")
 
+            is NetworkLabelDriver -> PrintResult.Failure("NetworkLabelDriver requires printLabel")
+
             is EscPosDriver,
             is StandardSystemDriver -> printViaIframe(html)
           }

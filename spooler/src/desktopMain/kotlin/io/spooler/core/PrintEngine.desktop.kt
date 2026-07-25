@@ -58,6 +58,8 @@ actual class PrintEngine {
 
               is NetworkEscPosDriver ->
                 sendToNetworkPrinter(driver.toEscPosBytes(html), driver.host, driver.port)
+
+              is NetworkLabelDriver -> PrintResult.Failure("NetworkLabelDriver requires printLabel")
             }
         }
       } catch (c: CancellationException) {
