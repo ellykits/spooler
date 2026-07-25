@@ -19,6 +19,9 @@ import kotlin.math.round
 
 private const val LINE_END = "\r\n"
 
+// TSPL font "0" is a scalable font whose x/y multipliers scale this base height in dots.
+private const val TSPL_FONT_BASE_HEIGHT_DOTS = 24
+
 /** Renders a [Label] to a TSPL command stream for TSC-compatible label printers. */
 object TsplRenderer : LabelRenderer {
   override fun render(label: Label): String = buildString {
@@ -65,8 +68,14 @@ object TsplRenderer : LabelRenderer {
   }
 
   private fun StringBuilder.appendText(text: LabelElement.Text) {
-    appendCommand("TEXT ${text.xDots},${text.yDots},\"0\",0,1,1,\"${escape(text.text)}\"")
+    val multiplier = textMultiplier(text.fontHeightDots)
+    appendCommand(
+      "TEXT ${text.xDots},${text.yDots},\"0\",0,$multiplier,$multiplier,\"${escape(text.text)}\""
+    )
   }
+
+  private fun textMultiplier(fontHeightDots: Int): Int =
+    maxOf(1, round(fontHeightDots.toDouble() / TSPL_FONT_BASE_HEIGHT_DOTS).toInt())
 
   // TSPL has no field-level escape sequence; substitute characters that would break a
   // quoted argument.

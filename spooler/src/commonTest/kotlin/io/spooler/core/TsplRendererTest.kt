@@ -89,4 +89,59 @@ class TsplRendererTest {
     assertFalse(tspl.contains("\"Say \"hi\"\""))
     assertContains(tspl, "'hi'")
   }
+
+  @Test
+  fun emitsFullQrCodeToken() {
+    val tspl = TsplRenderer.render(label)
+    assertContains(tspl, "QRCODE 10,20,M,6,A,0,\"ITEM-1\"")
+  }
+
+  @Test
+  fun emitsFullTextTokenWithDefaultFontSize() {
+    val tspl = TsplRenderer.render(label)
+    assertContains(tspl, "TEXT 10,250,\"0\",0,1,1,\"Widget M\"")
+  }
+
+  @Test
+  fun code128WithHumanReadableUsesOneFlag() {
+    val labelWithReadable =
+      label.copy(
+        elements =
+          listOf(
+            LabelElement.Barcode(
+              xDots = 10,
+              yDots = 20,
+              data = "ITEM-1",
+              symbology = BarcodeSymbology.CODE128,
+              humanReadable = true,
+            )
+          )
+      )
+    val tspl = TsplRenderer.render(labelWithReadable)
+    assertContains(tspl, "BARCODE 10,20,\"128\",100,1,0,2,2,\"ITEM-1\"")
+  }
+
+  @Test
+  fun sizeLineUsesMillimeterConversion() {
+    val tspl = TsplRenderer.render(label)
+    assertContains(tspl, "SIZE 76.2 mm,50.8 mm")
+  }
+
+  @Test
+  fun textMultiplierGrowsWithFontHeightDots() {
+    val smallLabel =
+      label.copy(
+        elements =
+          listOf(LabelElement.Text(xDots = 10, yDots = 10, text = "X", fontHeightDots = 24))
+      )
+    val bigLabel =
+      label.copy(
+        elements =
+          listOf(LabelElement.Text(xDots = 10, yDots = 10, text = "X", fontHeightDots = 72))
+      )
+    val smallTspl = TsplRenderer.render(smallLabel)
+    val bigTspl = TsplRenderer.render(bigLabel)
+    assertContains(smallTspl, "TEXT 10,10,\"0\",0,1,1,\"X\"")
+    assertContains(bigTspl, "TEXT 10,10,\"0\",0,3,3,\"X\"")
+  }
 }

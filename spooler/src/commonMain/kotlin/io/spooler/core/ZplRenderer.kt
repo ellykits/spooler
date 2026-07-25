@@ -55,5 +55,5 @@ object ZplRenderer : LabelRenderer {
   }
 
   private fun hexEscape(value: String): String =
-    value.replace("\\", "_5C").replace("^", "_5E").replace("~", "_7E")
+    value.replace("_", "_5F").replace("\\", "_5C").replace("^", "_5E").replace("~", "_7E")
 }

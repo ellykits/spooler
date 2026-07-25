@@ -82,4 +82,50 @@ class ZplRendererTest {
     assertContains(zpl, "Widget _5E M")
     assertFalse(zpl.contains("^FDWidget ^ M"))
   }
+
+  @Test
+  fun underscoreInBarcodeDataIsHexEscapedFirst() {
+    val labelWithUnderscore =
+      label.copy(
+        elements =
+          listOf(
+            LabelElement.Barcode(
+              xDots = 10,
+              yDots = 20,
+              data = "ITEM_1",
+              symbology = BarcodeSymbology.CODE128,
+            )
+          )
+      )
+    val zpl = ZplRenderer.render(labelWithUnderscore)
+    assertContains(zpl, "^FDITEM_5F1^FS")
+    assertFalse(zpl.contains("^FDITEM_1^FS"))
+  }
+
+  @Test
+  fun specialCharactersAreHexEscapedWithoutDoubleEscaping() {
+    val labelWithSpecials =
+      label.copy(elements = listOf(LabelElement.Text(xDots = 10, yDots = 10, text = "a_b\\c^d~e")))
+    val zpl = ZplRenderer.render(labelWithSpecials)
+    assertContains(zpl, "^FDa_5Fb_5Cc_5Ed_7Ee^FS")
+  }
+
+  @Test
+  fun code128WithHumanReadableUsesYInterpretationFlag() {
+    val labelWithReadable =
+      label.copy(
+        elements =
+          listOf(
+            LabelElement.Barcode(
+              xDots = 10,
+              yDots = 20,
+              data = "ITEM-1",
+              symbology = BarcodeSymbology.CODE128,
+              humanReadable = true,
+            )
+          )
+      )
+    val zpl = ZplRenderer.render(labelWithReadable)
+    assertContains(zpl, "^BCN,100,Y,N,N")
+  }
 }
