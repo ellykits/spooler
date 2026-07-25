@@ -57,3 +57,9 @@ enum class LabelDialect {
 interface LabelRenderer {
   fun render(label: Label): String
 }
+
+fun renderLabel(label: Label, dialect: LabelDialect): String =
+  when (dialect) {
+    LabelDialect.ZPL -> ZplRenderer
+    LabelDialect.TSPL -> TsplRenderer
+  }.render(label)

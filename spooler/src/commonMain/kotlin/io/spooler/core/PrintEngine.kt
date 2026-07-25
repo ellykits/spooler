@@ -18,6 +18,8 @@ package io.spooler.core
 expect class PrintEngine {
   suspend fun execute(html: String, target: PrintTarget, type: DocumentType): PrintResult
 
+  suspend fun printLabel(label: Label, target: PrintTarget): PrintResult
+
   suspend fun render(html: String, type: DocumentType): PrintResult
 
   /**
