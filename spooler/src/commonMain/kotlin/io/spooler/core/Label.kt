@@ -19,8 +19,8 @@ package io.spooler.core
 data class Label(
   val widthDots: Int,
   val heightDots: Int,
-  val dpi: Int = 203,
   val elements: List<LabelElement>,
+  val dpi: Int = 203,
 )
 
 sealed interface LabelElement {
@@ -54,7 +54,7 @@ enum class LabelDialect {
   TSPL,
 }
 
-interface LabelRenderer {
+internal interface LabelRenderer {
   fun render(label: Label): String
 }
 

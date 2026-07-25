@@ -92,13 +92,13 @@ val label =
   Label(
     widthDots = 609,
     heightDots = 406,
-    dpi = 203,
     elements =
       listOf(
         LabelElement.Barcode(xDots = 40, yDots = 40, data = "ITEM-000123", symbology = BarcodeSymbology.QR, heightDots = 120),
         LabelElement.Barcode(xDots = 40, yDots = 230, data = "ITEM-000123", symbology = BarcodeSymbology.CODE128, heightDots = 90),
         LabelElement.Text(xDots = 40, yDots = 340, text = "Nitrile Gloves — M", fontHeightDots = 30),
       ),
+    dpi = 203,
   )
 
 engine.printLabel(
@@ -130,11 +130,11 @@ hardware business. Rendered output:
 | `UnifiedDocument(type, title, accentColor?)` | Fluent builder: `addLogo`, `addImage`, `addHeader`, `addText`, `addTableRow`, `addHeaderRow`, `addDivider`, `addNewPage`, `addRawHtml`, `buildHtml` |
 | `DocumentType` | `RECEIPT_80MM`, `RECEIPT_58MM`, `A4_DOCUMENT` |
 | `ImageType` | `PNG`, `JPEG`, `SVG` |
-| `PrinterDriver` | `EscPosDriver(paperWidthMm, charactersPerLine, cut, openDrawer, printerName)`, `StandardSystemDriver(printerName, copies)`, `NetworkEscPosDriver(host, port, charactersPerLine, cut, openDrawer)`, `NetworkLabelDriver(host, port, dialect)` |
+| `PrinterDriver` | `EscPosDriver(paperWidthMm, charactersPerLine, cut, openDrawer, printerName)`, `StandardSystemDriver(printerName, copies)`, `NetworkEscPosDriver(host, port, charactersPerLine, cut, openDrawer)`, `NetworkLabelDriver(host, dialect, port)` |
 | `PrintTarget` | `SaveToFile(path)`, `SendToPrinter(driver)` |
 | `PrintResult` | `Success`, `Saved(path)`, `Failure(message, cause)` — with `result.isSuccess` |
 | `PrintEngine` | `suspend print(document, target)` (preferred), `suspend execute(html, target, type)`, `suspend printLabel(label, target)`, `registerFont(font)` |
-| `Label(widthDots, heightDots, dpi, elements)` | Native label content: `LabelElement.Barcode(xDots, yDots, data, symbology, heightDots, humanReadable)`, `LabelElement.Text(xDots, yDots, text, fontHeightDots)` |
+| `Label(widthDots, heightDots, elements, dpi)` | Native label content: `LabelElement.Barcode(xDots, yDots, data, symbology, heightDots, humanReadable)`, `LabelElement.Text(xDots, yDots, text, fontHeightDots)` |
 | `BarcodeSymbology` | `CODE128`, `QR` |
 | `LabelDialect` | `ZPL` (Zebra), `TSPL` (TSC) — `renderLabel(label, dialect)` returns the raw command string |
 | `RegisteredFont(name, bytes, weight?, style?)` | A font file to make available to the renderer |

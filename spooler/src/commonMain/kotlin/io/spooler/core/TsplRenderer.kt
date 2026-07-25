@@ -23,7 +23,7 @@ private const val LINE_END = "\r\n"
 private const val TSPL_FONT_BASE_HEIGHT_DOTS = 24
 
 /** Renders a [Label] to a TSPL command stream for TSC-compatible label printers. */
-object TsplRenderer : LabelRenderer {
+internal object TsplRenderer : LabelRenderer {
   override fun render(label: Label): String = buildString {
     val widthMm = dotsToMm(label.widthDots, label.dpi)
     val heightMm = dotsToMm(label.heightDots, label.dpi)

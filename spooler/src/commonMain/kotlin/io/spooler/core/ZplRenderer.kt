@@ -16,7 +16,7 @@
 package io.spooler.core
 
 /** Renders a [Label] to a ZPL II command stream for Zebra-compatible label printers. */
-object ZplRenderer : LabelRenderer {
+internal object ZplRenderer : LabelRenderer {
   override fun render(label: Label): String = buildString {
     append("^XA")
     append("^CI28")

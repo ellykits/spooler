@@ -37,5 +37,5 @@ data class NetworkEscPosDriver(
   val openDrawer: Boolean = false,
 ) : PrinterDriver
 
-data class NetworkLabelDriver(val host: String, val port: Int = 9100, val dialect: LabelDialect) :
+data class NetworkLabelDriver(val host: String, val dialect: LabelDialect, val port: Int = 9100) :
   PrinterDriver
