@@ -36,3 +36,6 @@ data class NetworkEscPosDriver(
   val cut: Boolean = true,
   val openDrawer: Boolean = false,
 ) : PrinterDriver
+
+data class NetworkLabelDriver(val host: String, val dialect: LabelDialect, val port: Int = 9100) :
+  PrinterDriver

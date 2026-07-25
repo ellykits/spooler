@@ -16,6 +16,7 @@
 package io.spooler.core
 
 import kotlin.coroutines.resume
+import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.usePinned
@@ -28,6 +29,7 @@ import platform.Foundation.NSData
 import platform.Foundation.NSError
 import platform.Foundation.NSMutableData
 import platform.Foundation.NSValue
+import platform.Foundation.create
 import platform.Foundation.setValue
 import platform.Foundation.writeToFile
 import platform.UIKit.UIApplication
@@ -57,11 +59,46 @@ actual class PrintEngine {
               is NetworkEscPosDriver ->
                 sendToNetworkPrinter(driver.toEscPosBytes(html), driver.host, driver.port)
 
+              is NetworkLabelDriver -> PrintResult.Failure("NetworkLabelDriver requires printLabel")
+
               is EscPosDriver,
               is StandardSystemDriver -> present(html, type)
             }
 
           is PrintTarget.SaveToFile -> renderPdf(html, type, target.path)
+        }
+      } catch (c: CancellationException) {
+        throw c
+      } catch (t: Throwable) {
+        PrintResult.Failure(t.message ?: "iOS print failed", t)
+      }
+    }
+
+  actual suspend fun printLabel(label: Label, target: PrintTarget): PrintResult =
+    withContext(Dispatchers.Main) {
+      try {
+        when (target) {
+          is PrintTarget.SendToPrinter ->
+            when (val driver = target.driver) {
+              is NetworkLabelDriver ->
+                sendToNetworkPrinter(
+                  renderLabel(label, driver.dialect).encodeToByteArray(),
+                  driver.host,
+                  driver.port,
+                )
+
+              else -> PrintResult.Failure("iOS does not support labels on this driver")
+            }
+
+          is PrintTarget.SaveToFile -> {
+            // SaveToFile carries no dialect, so default to ZPL.
+            val bytes = renderLabel(label, LabelDialect.ZPL).encodeToByteArray()
+            if (bytes.toNSData().writeToFile(target.path, atomically = true)) {
+              PrintResult.Saved(target.path)
+            } else {
+              PrintResult.Failure("Could not write label to ${target.path}")
+            }
+          }
         }
       } catch (c: CancellationException) {
         throw c
@@ -144,6 +181,12 @@ actual class PrintEngine {
     }
     return data
   }
+}
+
+@OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
+private fun ByteArray.toNSData(): NSData {
+  if (isEmpty()) return NSData()
+  return usePinned { pinned -> NSData.create(bytes = pinned.addressOf(0), length = size.toULong()) }
 }
 
 @OptIn(ExperimentalForeignApi::class)

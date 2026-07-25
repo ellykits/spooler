@@ -62,6 +62,8 @@ actual class PrintEngine(private val context: Context) {
                 PrintResult.Failure(t.message ?: "Android print failed", t)
               }
             }
+
+          is NetworkLabelDriver -> PrintResult.Failure("NetworkLabelDriver requires printLabel")
         }
 
       is PrintTarget.SaveToFile ->
@@ -76,6 +78,34 @@ actual class PrintEngine(private val context: Context) {
 
           else -> rendered
         }
+    }
+
+  actual suspend fun printLabel(label: Label, target: PrintTarget): PrintResult =
+    try {
+      when (target) {
+        is PrintTarget.SaveToFile -> {
+          // SaveToFile carries no dialect, so default to ZPL.
+          val bytes = renderLabel(label, LabelDialect.ZPL).encodeToByteArray()
+          File(target.path).apply { parentFile?.mkdirs() }.writeBytes(bytes)
+          PrintResult.Saved(target.path)
+        }
+
+        is PrintTarget.SendToPrinter ->
+          when (val driver = target.driver) {
+            is NetworkLabelDriver ->
+              sendToNetworkPrinter(
+                renderLabel(label, driver.dialect).encodeToByteArray(),
+                driver.host,
+                driver.port,
+              )
+
+            else -> PrintResult.Failure("Android does not support labels on this driver")
+          }
+      }
+    } catch (c: CancellationException) {
+      throw c
+    } catch (t: Throwable) {
+      PrintResult.Failure(t.message ?: "Android print failed", t)
     }
 
   actual suspend fun render(html: String, type: DocumentType): PrintResult =
@@ -254,5 +284,6 @@ actual class PrintEngine(private val context: Context) {
       is StandardSystemDriver -> driver.printerName ?: "spooler-document"
       is EscPosDriver -> "spooler-receipt"
       is NetworkEscPosDriver -> "spooler-receipt"
+      is NetworkLabelDriver -> "spooler-label"
     }
 }

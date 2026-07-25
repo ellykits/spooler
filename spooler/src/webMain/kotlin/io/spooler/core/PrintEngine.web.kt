@@ -43,6 +43,8 @@ actual class PrintEngine {
             is NetworkEscPosDriver ->
               PrintResult.Failure("Network printing is not available in the browser")
 
+            is NetworkLabelDriver -> PrintResult.Failure("NetworkLabelDriver requires printLabel")
+
             is EscPosDriver,
             is StandardSystemDriver -> printViaIframe(html)
           }
@@ -50,6 +52,9 @@ actual class PrintEngine {
     } catch (t: Throwable) {
       PrintResult.Failure(t.message ?: "Web print failed", t)
     }
+
+  actual suspend fun printLabel(label: Label, target: PrintTarget): PrintResult =
+    PrintResult.Failure("label printing needs a network label printer, unavailable on web")
 
   actual suspend fun render(html: String, type: DocumentType): PrintResult =
     PrintResult.Failure("PDF rendering is not available in the browser")

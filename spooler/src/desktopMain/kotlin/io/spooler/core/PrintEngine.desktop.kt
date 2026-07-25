@@ -58,6 +58,37 @@ actual class PrintEngine {
 
               is NetworkEscPosDriver ->
                 sendToNetworkPrinter(driver.toEscPosBytes(html), driver.host, driver.port)
+
+              is NetworkLabelDriver -> PrintResult.Failure("NetworkLabelDriver requires printLabel")
+            }
+        }
+      } catch (c: CancellationException) {
+        throw c
+      } catch (t: Throwable) {
+        PrintResult.Failure(t.message ?: "Desktop print failed", t)
+      }
+    }
+
+  actual suspend fun printLabel(label: Label, target: PrintTarget): PrintResult =
+    withContext(Dispatchers.Default) {
+      try {
+        when (target) {
+          is PrintTarget.SaveToFile -> {
+            // SaveToFile carries no dialect, so default to ZPL.
+            File(target.path).writeBytes(renderLabel(label, LabelDialect.ZPL).encodeToByteArray())
+            PrintResult.Saved(target.path)
+          }
+
+          is PrintTarget.SendToPrinter ->
+            when (val driver = target.driver) {
+              is NetworkLabelDriver ->
+                sendToNetworkPrinter(
+                  renderLabel(label, driver.dialect).encodeToByteArray(),
+                  driver.host,
+                  driver.port,
+                )
+
+              else -> PrintResult.Failure("Desktop does not support labels on this driver")
             }
         }
       } catch (c: CancellationException) {
