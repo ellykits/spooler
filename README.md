@@ -130,7 +130,7 @@ hardware business. Rendered output:
 | `UnifiedDocument(type, title, accentColor?)` | Fluent builder: `addLogo`, `addImage`, `addHeader`, `addText`, `addTableRow`, `addHeaderRow`, `addDivider`, `addNewPage`, `addRawHtml`, `buildHtml` |
 | `DocumentType` | `RECEIPT_80MM`, `RECEIPT_58MM`, `A4_DOCUMENT` |
 | `ImageType` | `PNG`, `JPEG`, `SVG` |
-| `PrinterDriver` | `EscPosDriver(paperWidthMm, charactersPerLine, cut, openDrawer, printerName)`, `StandardSystemDriver(printerName, copies)`, `NetworkEscPosDriver(host, port, charactersPerLine, cut, openDrawer)`, `NetworkLabelDriver(host, dialect, port)` |
+| `PrinterDriver` | `EscPosDriver(paperWidthMm, charactersPerLine, cut, openDrawer, printerName, codePage)`, `StandardSystemDriver(printerName, copies)`, `NetworkEscPosDriver(host, port, charactersPerLine, cut, openDrawer, codePage)`, `NetworkLabelDriver(host, dialect, port)` |
 | `PrintTarget` | `SaveToFile(path)`, `SendToPrinter(driver)` |
 | `PrintResult` | `Success`, `Saved(path)`, `Failure(message, cause)` — with `result.isSuccess` |
 | `PrintEngine` | `suspend print(document, target)` (preferred), `suspend execute(html, target, type)`, `suspend printLabel(label, target)`, `registerFont(font)` |
@@ -241,7 +241,10 @@ rather than emitting ESC/POS. Raw bytes are produced locally on Desktop only.
   ahead of the default `-apple-system, "Segoe UI", Roboto, sans-serif` — for every
   subsequent `execute`/`render` call on that engine; register nothing and output is
   unchanged.
-- **ESC/POS text** is emitted as ASCII; non-ASCII characters are replaced with `?`.
+- **ESC/POS text** is encoded through the driver's `codePage`, selected with `ESC t n`: `PC437`
+  (the default, which every ESC/POS printer has) or `PC858` (adds accented capitals and `€`).
+  A character the page lacks prints in its plain form — "São" as "Sao", "€" as "EUR" — and
+  one with no plain form as `?`.
   `EscPosDriver.charactersPerLine` defaults to `null`, deriving 32 or 48 columns from
   `paperWidthMm`; an explicit value (including `0`, meaning never wrap) overrides it.
   `EscPosDriver.printerName` targets a specific print service instead of the OS default.

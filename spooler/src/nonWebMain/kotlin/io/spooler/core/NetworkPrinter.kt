@@ -54,5 +54,10 @@ internal suspend fun sendToNetworkPrinter(bytes: ByteArray, host: String, port: 
 internal fun NetworkEscPosDriver.toEscPosBytes(html: String): ByteArray =
   buildEscPos(
     htmlToText(html),
-    EscPosDriver(charactersPerLine = charactersPerLine, cut = cut, openDrawer = openDrawer),
+    EscPosDriver(
+      charactersPerLine = charactersPerLine,
+      cut = cut,
+      openDrawer = openDrawer,
+      codePage = codePage,
+    ),
   )

@@ -15,6 +15,7 @@
 */
 package io.spooler.core
 
+import java.nio.charset.Charset
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -88,11 +89,46 @@ class EscPosTest {
   }
 
   @Test
-  fun nonAsciiCharactersAreReplacedWithQuestionMarks() {
+  fun selectsTheCodePageRightAfterInit() {
+    val bytes = buildEscPos("hi", EscPosDriver(codePage = EscPosCodePage.PC858)).toList()
+    assertEquals(listOf(0x1B, '@'.code, 0x1B, 't'.code, 19).map { it.toByte() }, bytes.take(5))
+  }
+
+  @Test
+  fun accentedLettersPrintFromTheCodePage() {
     val bytes = buildEscPos("Café", EscPosDriver()).toList()
-    assertFalse(bytes.any { it.toInt() and 0xFF > 0x7F })
-    val text = bytes.toByteArray().toString(Charsets.US_ASCII)
-    assertTrue(text.contains("Caf?"))
+    assertTrue(containsSubsequence(bytes, "Caf".encodeToByteArray().toList() + 0x82.toByte()))
+  }
+
+  @Test
+  fun theEuroSignPrintsWhereThePageHasIt() {
+    val pc858 = buildEscPos("€5", EscPosDriver(codePage = EscPosCodePage.PC858)).toList()
+    assertTrue(containsSubsequence(pc858, listOf(0xD5.toByte(), '5'.code.toByte())))
+    val pc437 = buildEscPos("€5", EscPosDriver()).toString(Charsets.US_ASCII)
+    assertTrue(pc437.contains("EUR5"), pc437)
+  }
+
+  @Test
+  fun lettersThePageLacksPrintInTheirPlainForm() {
+    val bytes = buildEscPos("São Tomé", EscPosDriver()).toList()
+    assertTrue(containsSubsequence(bytes, "Sao Tom".encodeToByteArray().toList() + 0x82.toByte()))
+  }
+
+  @Test
+  fun charactersWithNoPlainFormPrintAsQuestionMarks() {
+    val text = buildEscPos("茶", EscPosDriver()).toString(Charsets.US_ASCII)
+    assertTrue(text.contains("?"), text)
+  }
+
+  @Test
+  fun codePagesMatchTheJdksCharsets() {
+    val upper = ByteArray(128) { (0x80 + it).toByte() }
+    for ((page, charset) in
+      listOf(EscPosCodePage.PC437 to "IBM437", EscPosCodePage.PC858 to "IBM00858")) {
+      val text = String(upper, Charset.forName(charset))
+      val bytes = buildEscPos(text, EscPosDriver(charactersPerLine = 0, codePage = page))
+      assertEquals(upper.toList(), bytes.toList().subList(5, 5 + 128), "$page against $charset")
+    }
   }
 
   private fun containsSubsequence(haystack: List<Byte>, needle: List<Byte>): Boolean {

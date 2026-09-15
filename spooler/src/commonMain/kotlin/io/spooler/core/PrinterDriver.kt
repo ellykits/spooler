@@ -24,6 +24,7 @@ data class EscPosDriver(
   val cut: Boolean = true,
   val openDrawer: Boolean = false,
   val printerName: String? = null,
+  val codePage: EscPosCodePage = EscPosCodePage.PC437,
 ) : PrinterDriver
 
 data class StandardSystemDriver(val printerName: String? = null, val copies: Int = 1) :
@@ -35,7 +36,20 @@ data class NetworkEscPosDriver(
   val charactersPerLine: Int = 48,
   val cut: Boolean = true,
   val openDrawer: Boolean = false,
+  val codePage: EscPosCodePage = EscPosCodePage.PC437,
 ) : PrinterDriver
+
+/**
+ * The character table a receipt printer prints text from, selected with `ESC t n`. Characters the
+ * table lacks print in their plain form: "São" as "Sao", "€" as "EUR".
+ */
+enum class EscPosCodePage(internal val selector: Int) {
+  /** The table every ESC/POS printer starts in: most Western European letters, no euro sign. */
+  PC437(0),
+
+  /** Western European letters including accented capitals, and the euro sign. */
+  PC858(19),
+}
 
 data class NetworkLabelDriver(val host: String, val dialect: LabelDialect, val port: Int = 9100) :
   PrinterDriver
