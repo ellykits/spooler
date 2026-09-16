@@ -15,6 +15,7 @@
 */
 package io.spooler.core
 
+import java.net.InetSocketAddress
 import java.net.ServerSocket
 import java.net.Socket
 import kotlin.test.Test
@@ -58,8 +59,12 @@ class NetworkPrinterTest {
 
   @Test
   fun reportsFailureWhenThePrinterDropsTheConnection() = runTest {
-    val server = ServerSocket(0)
-    // SO_LINGER 0 makes close send an RST, so the payload cannot drain.
+    val server = ServerSocket()
+    // A small receive buffer, set before bind so the accepted socket inherits it, keeps the
+    // payload from draining into the kernel; SO_LINGER 0 then makes close send an RST that
+    // interrupts the write instead of racing it.
+    server.receiveBufferSize = 1024
+    server.bind(InetSocketAddress("127.0.0.1", 0))
     val dropped = async(Dispatchers.IO) { server.accept().use { it.setSoLinger(true, 0) } }
 
     val result =
