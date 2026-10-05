@@ -35,7 +35,7 @@ printer, or save them to a file. Runs on Android, iOS, Desktop (JVM), and Web (W
 // settings.gradle.kts -> dependencyResolutionManagement { repositories { mavenCentral() } }
 
 // build.gradle.kts (commonMain)
-implementation("io.github.ellykits:spooler:1.0.0-alpha02")
+implementation("io.github.ellykits:spooler:1.0.0-alpha06")
 ```
 
 ## Quickstart
