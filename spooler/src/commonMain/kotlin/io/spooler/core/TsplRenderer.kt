@@ -36,7 +36,7 @@ internal object TsplRenderer : LabelRenderer {
         is LabelElement.Text -> appendText(element)
       }
     }
-    append("PRINT 1")
+    appendCommand("PRINT 1")
   }
 
   private fun dotsToMm(dots: Int, dpi: Int): String {

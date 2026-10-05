@@ -78,7 +78,7 @@ class TsplRendererTest {
   @Test
   fun endsWithPrintCommand() {
     val tspl = TsplRenderer.render(label)
-    assertTrue(tspl.trimEnd().endsWith("PRINT 1"))
+    assertTrue(tspl.endsWith("PRINT 1\r\n"), "a TSC printer runs a command only on its CR LF")
   }
 
   @Test
