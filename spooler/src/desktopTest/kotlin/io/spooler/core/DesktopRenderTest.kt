@@ -18,8 +18,11 @@ package io.spooler.core
 import java.io.File
 import kotlin.io.path.createTempFile
 import kotlin.test.Test
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlinx.coroutines.test.runTest
+import org.apache.pdfbox.pdmodel.PDDocument
+import org.apache.pdfbox.text.PDFTextStripper
 
 class DesktopRenderTest {
   @Test
@@ -32,6 +35,22 @@ class DesktopRenderTest {
     assertTrue(result is PrintResult.Rendered)
     val header = result.bytes.decodeToString(0, 5)
     assertTrue(header == "%PDF-", "expected a PDF header, got $header")
+  }
+
+  @Test
+  fun aStyleInTheBodyStylesTheDocumentInsteadOfPrinting() = runTest {
+    val html =
+      UnifiedDocument(DocumentType.A4_DOCUMENT, title = "Quotation")
+        .addRawHtml("<style>.house { text-transform: uppercase; }</style>")
+        .addRawHtml("<p class=\"house\">Quotation</p>")
+        .buildHtml()
+
+    val result = PrintEngine().render(html, DocumentType.A4_DOCUMENT)
+
+    assertTrue(result is PrintResult.Rendered)
+    val text = PDDocument.load(result.bytes).use { PDFTextStripper().getText(it) }
+    assertFalse("text-transform" in text, text)
+    assertTrue("QUOTATION" in text, text)
   }
 
   @Test
