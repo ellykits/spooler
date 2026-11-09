@@ -36,6 +36,8 @@ import org.apache.pdfbox.printing.PDFPageable
 
 actual class PrintEngine {
   private val registeredFonts = mutableListOf<RegisteredFont>()
+  private val bodyStyle =
+    Regex("<style\\b[^>]*>.*?</style>", setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL))
 
   actual fun registerFont(font: RegisteredFont) {
     registeredFonts += font
@@ -119,8 +121,24 @@ actual class PrintEngine {
         true,
       )
     }
-    builder.withHtmlContent(withRegisteredFontStack(html), null).toStream(out).run()
+    builder
+      .withHtmlContent(withRegisteredFontStack(withStylesInHead(html)), null)
+      .toStream(out)
+      .run()
     return out.toByteArray()
+  }
+
+  /**
+   * openhtmltopdf applies only the stylesheets in `<head>` and prints a `<style>` met in the body
+   * as text, where browsers apply it wherever it stands, so body stylesheets move into the head.
+   */
+  private fun withStylesInHead(html: String): String {
+    val headEnd = html.indexOf("</head>", ignoreCase = true)
+    if (headEnd < 0) return html
+    val body = html.substring(headEnd)
+    val styles = bodyStyle.findAll(body).joinToString("") { it.value }
+    if (styles.isEmpty()) return html
+    return html.substring(0, headEnd) + styles + bodyStyle.replace(body, "")
   }
 
   /**
