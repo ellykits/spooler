@@ -40,10 +40,12 @@ internal const val SYSTEM_FONT_STACK = """-apple-system, "Segoe UI", Roboto, san
 
 internal fun DocumentType.styleBlock(accentColor: String? = null): String {
   val accent = sanitizeAccentColor(accentColor)
+  // A page's margins already narrow it, so A4 only caps the width; a roll is exactly its width.
+  val widthRule = if (isContinuous) "width" else "max-width"
   val base =
     """
     * { box-sizing: border-box; }
-    body { margin: 0; padding: 8px; width: $cssWidth; font-family: $SYSTEM_FONT_STACK; font-size: 12px; color: #000; }
+    body { margin: 0; padding: 8px; $widthRule: $cssWidth; font-family: $SYSTEM_FONT_STACK; font-size: 12px; color: #000; }
     .logo { display: block; max-width: 100%; margin: 0 auto 8px; }
     .image { display: block; max-width: 100%; margin: 6px 0; }
     .graphic { text-align: center; margin: 8px 0; }
