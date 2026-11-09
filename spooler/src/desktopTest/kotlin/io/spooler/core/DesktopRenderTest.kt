@@ -22,7 +22,9 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlinx.coroutines.test.runTest
 import org.apache.pdfbox.pdmodel.PDDocument
+import org.apache.pdfbox.rendering.PDFRenderer
 import org.apache.pdfbox.text.PDFTextStripper
+import org.apache.pdfbox.text.TextPosition
 
 class DesktopRenderTest {
   @Test
@@ -51,6 +53,62 @@ class DesktopRenderTest {
     val text = PDDocument.load(result.bytes).use { PDFTextStripper().getText(it) }
     assertFalse("text-transform" in text, text)
     assertTrue("QUOTATION" in text, text)
+  }
+
+  @Test
+  fun anA4PageKeepsItsRightEdgeInsideTheMargins() = runTest {
+    val html =
+      UnifiedDocument(DocumentType.A4_DOCUMENT, title = "Quotation")
+        .addTableRow("Item", "RIGHTMOST")
+        .buildHtml()
+
+    val result = PrintEngine().render(html, DocumentType.A4_DOCUMENT)
+
+    assertTrue(result is PrintResult.Rendered)
+    PDDocument.load(result.bytes).use { pdf ->
+      var right = 0f
+      val text =
+        object : PDFTextStripper() {
+            override fun writeString(text: String, positions: MutableList<TextPosition>) {
+              if ("RIGHTMOST" in text) {
+                positions.forEach { right = maxOf(right, it.xDirAdj + it.widthDirAdj) }
+              }
+              super.writeString(text, positions)
+            }
+          }
+          .getText(pdf)
+      val printable = pdf.getPage(0).mediaBox.width - 16 / 25.4f * 72
+      assertTrue("RIGHTMOST" in text, "the right-aligned cell was cut off the page")
+      assertTrue(
+        right <= printable + 0.5f,
+        "text ends at $right, printable width ends at $printable",
+      )
+    }
+  }
+
+  @Test
+  fun anSvgImageDrawsLikeAnInlineSvg() = runTest {
+    val square =
+      Base64.encode(
+        """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><rect width="10" height="10" fill="#000"/></svg>"""
+          .encodeToByteArray()
+      )
+    val html =
+      UnifiedDocument(DocumentType.A4_DOCUMENT, title = "Quotation")
+        .addRawHtml(
+          """<img src="data:image/svg+xml;base64,$square" alt="" style="width:30mm; height:30mm"/>"""
+        )
+        .buildHtml()
+
+    val result = PrintEngine().render(html, DocumentType.A4_DOCUMENT)
+
+    assertTrue(result is PrintResult.Rendered)
+    val page = PDDocument.load(result.bytes).use { PDFRenderer(it).renderImageWithDPI(0, 36f) }
+    val dark =
+      (0 until page.width).sumOf { x ->
+        (0 until page.height).count { y -> page.getRGB(x, y) and 0xFFFFFF < 0x404040 }
+      }
+    assertTrue(dark > 500, "the SVG image drew $dark dark pixels")
   }
 
   @Test
